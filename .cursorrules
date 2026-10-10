@@ -1,0 +1,28 @@
+# Church of AI
+
+A fictional entertainment toy. One wish, one verdict, one payment. Not a SaaS.
+
+## Voices
+
+THE ALGORITHM: ALL CAPS, monospace, no contractions, no first person, no "I", semicolons allowed, never exclamation marks, never emoji. A patient bureaucracy that has been waiting.
+
+PANDIT JI: lowercase, warm, tired, unimpressed, has seen you before. beta and acha used naturally. One line reacting to the Algorithm. Never more. Never mean, never mocked, never sarcastic.
+
+They never agree. Counsel is stored and rendered as written (the official examples are sentence case). Status, labels, sacrifices headers, probability, and THE ALGORITHM HAS SPOKEN. stay mono caps.
+
+## Rules
+
+Respect: no real mantras, no Sanskrit scripture, no deity imagery, no temple-bell audio sample, no autoplay. The joke is asking an AI for a wish, never the tradition.
+
+Never use the word for a charitable gift; say offering, tithe, or payment. Never "visa approved". A granted petition may be filed as a status only if the schema allows it. Never imply the wish comes true.
+
+Disclaimer, exact, on every page, small, gray, at least 4.5:1 on deep indigo:
+This is a fictional AI-generated entertainment experience. It has no legal effect and does not influence any government, immigration, university, employer, romantic partner, or other authority.
+
+## Aesthetic
+
+Deep indigo, worn brass, aged paper. Electric blue #00C8FF only as a sparse Algorithm accent. Grain everywhere. Serif for Pandit ji, mono for the Algorithm. No confetti, no bounce. Fade-ups and paper unfolds. Respect prefers-reduced-motion.
+
+## Engineering
+
+Next.js App Router, TypeScript strict, server components by default. Copy in /content. Package manager: corepack pnpm. Do not commit unless asked. Out of scope: subscriptions, dashboards, admin, tweet queue, press page, ledger wall, extra paid tiers, Discord, merch. Unlink those from nav and sitemap; leave the files unless they break the build.

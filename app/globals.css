@@ -1,0 +1,282 @@
+@import "tailwindcss";
+
+/* Deep indigo, worn brass, aged paper. Electric blue only as a sparse Algorithm accent. */
+:root {
+  --indigo: #1b1b4b;
+  --ink: #1a1740;
+  --night: #0f0e2e;
+  --brass: #b8894a;
+  --brass-light: #e2c48a;
+  --brass-deep: #8a6230;
+  --paper: #f4e7d4;
+  --bone: #f2ede4;
+  --maroon: #6e1e23;
+  --signal: #00c8ff;
+  --mist: #d2d0dc;
+}
+
+@theme inline {
+  --color-indigo: var(--indigo);
+  --color-ink: var(--ink);
+  --color-night: var(--night);
+  --color-brass: var(--brass);
+  --color-brass-light: var(--brass-light);
+  --color-brass-deep: var(--brass-deep);
+  --color-paper: var(--paper);
+  --color-bone: var(--bone);
+  --color-maroon: var(--maroon);
+  --color-signal: var(--signal);
+  --color-mist: var(--mist);
+  --font-serif: var(--font-fraunces), Georgia, serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+}
+
+html {
+  background: var(--indigo);
+  color: var(--bone);
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+}
+
+.display {
+  font-family: var(--font-serif);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  line-height: 1.02;
+}
+
+.serif-warm {
+  font-family: var(--font-serif);
+  font-weight: 500;
+}
+
+.grain {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+.petition-scroll {
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--brass);
+  box-shadow: 0 0 0 6px rgba(184, 137, 74, 0.15), 0 24px 60px rgba(0, 0, 0, 0.35);
+  transform-origin: top center;
+  animation: unfold 520ms ease-out both;
+}
+
+.press {
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.press:focus-visible,
+.focus-ring:focus-visible,
+.focus-within-ring:has(:focus-visible) {
+  outline: 2px solid var(--brass-light);
+  outline-offset: 3px;
+}
+
+.btn-brass {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--brass);
+  background: var(--maroon);
+  padding: 0 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  letter-spacing: 0.12em;
+  color: var(--bone);
+}
+
+.btn-brass:hover {
+  background: #84262c;
+}
+
+.btn-brass[aria-disabled="true"],
+.btn-brass:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-outline {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--brass);
+  padding: 0 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  letter-spacing: 0.12em;
+  color: var(--brass-light);
+}
+
+.btn-outline:hover {
+  background: rgba(184, 137, 74, 0.12);
+}
+
+.fade-up {
+  animation: fade-up 600ms ease-out both;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0.5rem;
+  z-index: 100;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 0.5rem 1rem;
+}
+
+.skip-link:focus {
+  left: 0.5rem;
+}
+
+@keyframes unfold {
+  from {
+    opacity: 0;
+    transform: scaleY(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Hologram: CSS over the still portrait. No flash, no audio. Static class drops motion. */
+.hologram-stage {
+  isolation: isolate;
+}
+
+.hologram-wash,
+.hologram-scan,
+.hologram-particles,
+.hologram-anger {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+}
+
+.hologram-wash {
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(0, 200, 255, 0.18), transparent 62%),
+    linear-gradient(180deg, rgba(226, 196, 138, 0.08), transparent 40%, rgba(0, 200, 255, 0.12));
+  mix-blend-mode: screen;
+}
+
+.hologram-scan {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 200, 255, 0.08) 0,
+    rgba(0, 200, 255, 0.08) 1px,
+    transparent 1px,
+    transparent 7px
+  );
+  opacity: 0.55;
+}
+
+.hologram-live .hologram-scan {
+  animation: hologram-scan 9s linear infinite;
+}
+
+.hologram-particles {
+  background-image:
+    radial-gradient(circle, rgba(0, 200, 255, 0.7) 0 1px, transparent 2px),
+    radial-gradient(circle, rgba(226, 196, 138, 0.6) 0 1px, transparent 2px);
+  background-size: 120px 80px, 90px 110px;
+  background-position: 10% 20%, 70% 60%;
+  opacity: 0.35;
+}
+
+.hologram-live .hologram-particles {
+  animation: hologram-drift 14s linear infinite;
+}
+
+.hologram-anger {
+  display: none;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 0.75rem;
+  background: radial-gradient(ellipse at 50% 40%, rgba(180, 24, 32, 0.28), transparent 70%);
+  color: #ff6b6b;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.hologram[data-mood="tip-reminder"] .hologram-anger {
+  display: flex;
+}
+
+.hologram[data-mood="tip-reminder"] .hologram-stage {
+  box-shadow: inset 0 0 40px rgba(180, 24, 32, 0.45), 0 0 24px rgba(180, 24, 32, 0.25);
+}
+
+.hologram[data-mood="offering-received"] .hologram-stage {
+  box-shadow: inset 0 0 36px rgba(226, 196, 138, 0.35), 0 0 20px rgba(0, 200, 255, 0.15);
+}
+
+.hologram[data-mood="processing"] .hologram-wash {
+  background: radial-gradient(ellipse at 50% 40%, rgba(0, 200, 255, 0.28), transparent 62%);
+}
+
+.hologram-static .hologram-scan,
+.hologram-static .hologram-particles {
+  animation: none;
+}
+
+.hologram-caption {
+  min-height: 2.5rem;
+}
+
+@keyframes hologram-scan {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(7px);
+  }
+}
+
+@keyframes hologram-drift {
+  from {
+    background-position: 10% 20%, 70% 60%;
+  }
+  to {
+    background-position: 18% 80%, 62% 10%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .hologram-scan,
+  .hologram-particles {
+    animation: none !important;
+  }
+}
