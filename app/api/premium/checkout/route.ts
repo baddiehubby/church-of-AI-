@@ -1,6 +1,7 @@
 import { premium } from "@/content/premium";
 import { isRecord } from "@/lib/guards";
 import { CheckoutUnavailableError, createPremiumCheckout, premiumCheckoutConfigured } from "@/lib/lemon";
+import { safeRedirectOrigin } from "@/lib/requestOrigin";
 import { captureError } from "@/lib/monitor";
 import { premiumConsentGiven } from "@/lib/premiumConsent";
 import { rateLimit } from "@/lib/rateLimit";
@@ -42,7 +43,11 @@ export async function POST(request: Request): Promise<Response> {
   const limit = await rateLimit(request, "checkout", 5, 10 * 60 * 1000);
   if (!limit.ok) return Response.json({ error: premium.errors.rate }, { status: 429 });
   try {
-    const url = await createPremiumCheckout({ profileId: session.profileId, email: session.email });
+    const url = await createPremiumCheckout({
+      profileId: session.profileId,
+      email: session.email,
+      origin: safeRedirectOrigin(request),
+    });
     if (wantsJson) return Response.json({ checkoutUrl: url });
     return Response.redirect(url, 303);
   } catch (error) {

@@ -1,17 +1,24 @@
 // Assumptions: the wish desk endpoint (JSON from the enhanced form, urlencoded without JS).
 // Free categories: existing flow, AI reading generated now, rate limited 1 per 30s and 3 per hour per hashed IP,
 // stored as a public petition, then /verdict/<id>.
-// Visa categories: nothing is generated before payment. The validated wish is stored as a pending visa_wishes
-// row keyed by an unguessable reference, then a Lemon checkout is created for the $10 variant with only that
-// reference in custom data, rate limited like checkout (5 per 10 minutes). Missing config is a clear 503 message.
-// Logs and Sentry never carry the wish text.
+// Visa categories: the primary intent is a $10 blessing on the offering/certificate variant. The wish is filed
+// as a petition, then createPetitionCheckout runs at 1000 cents (kind certificate). An optional intent=visa
+// still uses the Visa Wish Certificate variant when that env is set. Missing Lemon config is an in-page bowl
+// message, never a bounce to another host. Logs and Sentry never carry the wish text.
 
 import { altar, type AltarErrorCode } from "@/content/landing";
 import { visaOffer } from "@/content/visa";
+import { BLESSING_CENTS, resolveVisaSubmitIntent } from "@/lib/altarCheckout";
 import { generateVerdict } from "@/lib/algorithm";
-import { appUrl } from "@/lib/env";
 import { isRecord } from "@/lib/guards";
-import { CheckoutUnavailableError, createVisaCheckout, visaCheckoutConfigured } from "@/lib/lemon";
+import {
+  CheckoutUnavailableError,
+  createPetitionCheckout,
+  createVisaCheckout,
+  petitionCheckoutConfigured,
+  visaCheckoutConfigured,
+} from "@/lib/lemon";
+import { localRedirect, safeRedirectOrigin } from "@/lib/requestOrigin";
 import { saveLocalPetition } from "@/lib/local-petitions";
 import { logger } from "@/lib/logger";
 import { captureError } from "@/lib/monitor";
@@ -26,12 +33,19 @@ export const dynamic = "force-dynamic";
 
 type Fields = Record<string, unknown>;
 
-function fail(wantsJson: boolean, code: AltarErrorCode | "unconfigured" | "visa_rate" | "nap", status: number, field?: string, retryAfter?: number) {
+function fail(
+  request: Request,
+  wantsJson: boolean,
+  code: AltarErrorCode | "unconfigured" | "visa_rate" | "nap",
+  status: number,
+  field?: string,
+  retryAfter?: number,
+) {
   const message =
     code === "unconfigured" ? visaOffer.errors.unconfigured : code === "visa_rate" ? visaOffer.errors.rate : code === "nap" ? visaOffer.errors.nap : altar.errors[code];
   const headers: Record<string, string> = retryAfter ? { "Retry-After": String(retryAfter) } : {};
   if (wantsJson) return Response.json({ error: message, code, ...(field ? { field } : {}) }, { status, headers });
-  return Response.redirect(`${appUrl()}/?notice=${code}#wish`, 303);
+  return localRedirect(request, `/?notice=${code}#wish`);
 }
 
 async function readFields(request: Request, wantsJson: boolean): Promise<Fields | null> {
@@ -40,41 +54,21 @@ async function readFields(request: Request, wantsJson: boolean): Promise<Fields 
     return isRecord(body) ? body : null;
   }
   const form = await request.formData();
-  return { wish: form.get("wish"), category: form.get("category"), country: form.get("country"), firstName: form.get("firstName") };
+  return {
+    wish: form.get("wish"),
+    category: form.get("category"),
+    country: form.get("country"),
+    firstName: form.get("firstName"),
+    intent: form.get("intent"),
+  };
 }
 
-async function visaCheckout(request: Request, parsed: WishSuccess, wantsJson: boolean): Promise<Response> {
-  if (!visaCheckoutConfigured() || !visaStoreAvailable()) return fail(wantsJson, "unconfigured", 503);
-  const limit = await rateLimit(request, "checkout", 5, 10 * 60 * 1000);
-  if (!limit.ok) return fail(wantsJson, "visa_rate", 429, undefined, limit.retryAfter);
-  let pending: { referenceId: string; certificateNo: string };
-  try {
-    pending = await createPendingVisaWish({ categoryId: parsed.categoryId, country: parsed.country ?? "", wish: parsed.wish, firstName: parsed.firstName });
-  } catch (error) {
-    if (error instanceof VisaStoreUnavailable) return fail(wantsJson, "unconfigured", 503);
-    logger.error("visa pending insert failed");
-    captureError(error);
-    return fail(wantsJson, "upstream", 503);
-  }
-  try {
-    const url = await createVisaCheckout(pending);
-    logger.info("visa checkout created", { certificateNo: pending.certificateNo });
-    if (wantsJson) return Response.json({ checkoutUrl: url });
-    return Response.redirect(url, 303);
-  } catch (error) {
-    if (error instanceof CheckoutUnavailableError && error.reason === "not configured") return fail(wantsJson, "unconfigured", 503);
-    captureError(error, { certificate_no: pending.certificateNo });
-    return fail(wantsJson, "nap", 503);
-  }
-}
-
-async function freeReading(request: Request, parsed: WishSuccess, wantsJson: boolean): Promise<Response> {
-  const burst = await rateLimit(request, "wish-burst", 1, 30_000);
-  if (!burst.ok) return fail(wantsJson, "rate", 429, undefined, burst.retryAfter);
-  const limit = await rateLimit(request, "wish", 3, 60 * 60 * 1000);
-  if (!limit.ok) return fail(wantsJson, "rate", 429, undefined, limit.retryAfter);
-
-  const safe = await generateVerdict(parsed.wish, { category: parsed.categoryLabel });
+async function saveWishPetition(parsed: WishSuccess): Promise<string | null> {
+  const safe = await generateVerdict(parsed.wish, {
+    category: parsed.categoryLabel,
+    country: parsed.country,
+    visa: parsed.kind === "visa",
+  });
   let petitionId = generatePetitionId();
   const row = {
     wish: parsed.wish,
@@ -85,7 +79,6 @@ async function freeReading(request: Request, parsed: WishSuccess, wantsJson: boo
     algo_probability: safe.algo_probability,
     pandit_reply: safe.pandit_reply,
   };
-  const done = () => (wantsJson ? Response.json({ petitionId }) : Response.redirect(`${appUrl()}/verdict/${petitionId}`, 303));
 
   if (!isSupabaseConfigured()) {
     saveLocalPetition({
@@ -99,21 +92,80 @@ async function freeReading(request: Request, parsed: WishSuccess, wantsJson: boo
       panditReply: safe.pandit_reply,
       createdAt: new Date().toISOString(),
     });
-    return done();
+    return petitionId;
   }
 
   const service = getServiceClient();
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const { error } = await service.from("petitions").insert({ ...row, petition_id: petitionId });
-    if (!error) return done();
+    if (!error) return petitionId;
     if (error.code === "23505") {
       petitionId = generatePetitionId();
       continue;
     }
     captureError(new Error(`petition insert failed: ${error.code}`), { petition_id: petitionId });
-    return fail(wantsJson, "upstream", 503);
+    return null;
   }
-  return fail(wantsJson, "upstream", 503);
+  return null;
+}
+
+async function blessingCheckout(request: Request, parsed: WishSuccess, wantsJson: boolean): Promise<Response> {
+  if (!petitionCheckoutConfigured()) return fail(request, wantsJson, "unconfigured", 503);
+  const limit = await rateLimit(request, "checkout", 5, 10 * 60 * 1000);
+  if (!limit.ok) return fail(request, wantsJson, "visa_rate", 429, undefined, limit.retryAfter);
+  const petitionId = await saveWishPetition(parsed);
+  if (!petitionId) return fail(request, wantsJson, "upstream", 503);
+  try {
+    const url = await createPetitionCheckout({
+      petitionId,
+      name: parsed.firstName ?? "Friend",
+      amountCents: BLESSING_CENTS,
+      origin: safeRedirectOrigin(request),
+    });
+    logger.info("blessing checkout created", { petitionId });
+    if (wantsJson) return Response.json({ checkoutUrl: url });
+    return Response.redirect(url, 303);
+  } catch (error) {
+    if (error instanceof CheckoutUnavailableError && error.reason === "not configured") return fail(request, wantsJson, "unconfigured", 503);
+    captureError(error, { petition_id: petitionId });
+    return fail(request, wantsJson, "nap", 503);
+  }
+}
+
+async function visaCheckout(request: Request, parsed: WishSuccess, wantsJson: boolean): Promise<Response> {
+  if (!visaCheckoutConfigured() || !visaStoreAvailable()) return blessingCheckout(request, parsed, wantsJson);
+  const limit = await rateLimit(request, "checkout", 5, 10 * 60 * 1000);
+  if (!limit.ok) return fail(request, wantsJson, "visa_rate", 429, undefined, limit.retryAfter);
+  let pending: { referenceId: string; certificateNo: string };
+  try {
+    pending = await createPendingVisaWish({ categoryId: parsed.categoryId, country: parsed.country ?? "", wish: parsed.wish, firstName: parsed.firstName });
+  } catch (error) {
+    if (error instanceof VisaStoreUnavailable) return blessingCheckout(request, parsed, wantsJson);
+    logger.error("visa pending insert failed");
+    captureError(error);
+    return fail(request, wantsJson, "upstream", 503);
+  }
+  try {
+    const url = await createVisaCheckout({ ...pending, origin: safeRedirectOrigin(request) });
+    logger.info("visa checkout created", { certificateNo: pending.certificateNo });
+    if (wantsJson) return Response.json({ checkoutUrl: url });
+    return Response.redirect(url, 303);
+  } catch (error) {
+    if (error instanceof CheckoutUnavailableError && error.reason === "not configured") return blessingCheckout(request, parsed, wantsJson);
+    captureError(error, { certificate_no: pending.certificateNo });
+    return fail(request, wantsJson, "nap", 503);
+  }
+}
+
+async function freeReading(request: Request, parsed: WishSuccess, wantsJson: boolean): Promise<Response> {
+  const burst = await rateLimit(request, "wish-burst", 1, 30_000);
+  if (!burst.ok) return fail(request, wantsJson, "rate", 429, undefined, burst.retryAfter);
+  const limit = await rateLimit(request, "wish", 3, 60 * 60 * 1000);
+  if (!limit.ok) return fail(request, wantsJson, "rate", 429, undefined, limit.retryAfter);
+
+  const petitionId = await saveWishPetition(parsed);
+  if (!petitionId) return fail(request, wantsJson, "upstream", 503);
+  return wantsJson ? Response.json({ petitionId }) : localRedirect(request, `/verdict/${petitionId}`);
 }
 
 export async function POST(request: Request) {
@@ -122,12 +174,14 @@ export async function POST(request: Request) {
   try {
     fields = await readFields(request, wantsJson);
   } catch {
-    return fail(wantsJson, "upstream", 400);
+    return fail(request, wantsJson, "upstream", 400);
   }
-  if (!fields) return fail(wantsJson, "upstream", 400);
+  if (!fields) return fail(request, wantsJson, "upstream", 400);
 
   const parsed = parseWishInput({ wish: fields.wish, category: fields.category, country: fields.country, firstName: fields.firstName });
-  if (!parsed.ok) return fail(wantsJson, parsed.code, 400, parsed.field);
+  if (!parsed.ok) return fail(request, wantsJson, parsed.code, 400, parsed.field);
 
-  return parsed.kind === "visa" ? visaCheckout(request, parsed, wantsJson) : freeReading(request, parsed, wantsJson);
+  if (parsed.kind !== "visa") return freeReading(request, parsed, wantsJson);
+  const intent = resolveVisaSubmitIntent(fields.intent, visaCheckoutConfigured() && visaStoreAvailable());
+  return intent === "visa" ? visaCheckout(request, parsed, wantsJson) : blessingCheckout(request, parsed, wantsJson);
 }

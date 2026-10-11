@@ -29,7 +29,7 @@ export const altar = {
   noscript: {
     country: " (Europe Visa only)",
     firstName: " (visa wishes only)",
-    visa: "Visa categories continue to the $10 checkout when you submit.",
+    visa: "Visa categories place a $10 one-time blessing when you submit. Premium is a separate $10/month desk.",
   },
   publicNote: "FREE READINGS ARE PUBLIC RECORDS. DO NOT FILE ANYTHING PRIVATE.",
   stages: {

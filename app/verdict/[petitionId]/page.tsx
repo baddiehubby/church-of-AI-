@@ -8,12 +8,15 @@ import portrait from "@/public/images/sacha-pandit-hero.jpg";
 import { Disclaimer } from "@/components/Disclaimer";
 import { HologramPandit } from "@/components/HologramPandit";
 import { OfferingForm } from "@/components/OfferingForm";
+import { OfferingSlip } from "@/components/OfferingSlip";
+import { PredictionPop } from "@/components/PredictionPop";
 import { PremiumOffer } from "@/components/PremiumOffer";
 import { ShareRow } from "@/components/VerdictTools";
 import { hologram } from "@/content/hologram";
 import { hero } from "@/content/landing";
 import { certificateOffer, verdictPage } from "@/content/verdict";
 import { BRAND } from "@/lib/brand";
+import { petitionCheckoutConfigured } from "@/lib/lemon";
 import { getPetition } from "@/lib/petitions";
 import { isPetitionId } from "@/lib/soul-id";
 
@@ -89,21 +92,27 @@ export default async function VerdictPage({ params, searchParams }: PageProps) {
             <Image src={portrait} alt={hero.imageAlt} fill sizes="(max-width: 768px) 92vw, 420px" className="object-cover" />
           </HologramPandit>
         </div>
-        <div id="certificate" className="mt-10 border border-[#B8894A] bg-[#F4E7D4] p-6 text-[#1A1740]">
-          <h2 className="font-mono text-sm tracking-[0.12em]">{certificateOffer.heading}</h2>
+        <div className="mt-10">
+          <PredictionPop seed={petition.petitionId} />
+        </div>
+        <div id="certificate" className="altar-desk mt-6 border border-[#B8894A] bg-[#F4E7D4] p-6 text-[#1A1740] sm:p-8">
+          <p className="font-mono text-[0.65rem] tracking-[0.2em] text-[#8A6230]">{certificateOffer.kicker}</p>
+          <h2 className="mt-2 font-mono text-sm tracking-[0.12em]">{certificateOffer.heading}</h2>
+          <p className="serif-warm mt-2 text-lg italic">{certificateOffer.bowl}</p>
           <p className="mt-2 font-mono text-xs tracking-[0.12em]">{certificateOffer.minimum}</p>
           <p className="mt-3 text-sm leading-relaxed">{certificateOffer.body}</p>
           {petition.certified ? (
             <>
               <p className="serif-warm mt-4 text-lg">{hologram.offeringReceived}</p>
+              <OfferingSlip petitionId={petition.petitionId} />
               <p className="mt-4">
                 <Link className="underline" href={`/certificate/${petition.petitionId}`}>
-                  {certificateOffer.button}
+                  {certificateOffer.slipKicker}
                 </Link>
               </p>
             </>
           ) : (
-            <OfferingForm petitionId={petition.petitionId} notice={notice} />
+            <OfferingForm petitionId={petition.petitionId} notice={notice} bowlReady={petitionCheckoutConfigured()} />
           )}
         </div>
         <PremiumOffer />

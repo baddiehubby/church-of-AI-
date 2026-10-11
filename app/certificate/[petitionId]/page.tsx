@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Disclaimer } from "@/components/Disclaimer";
+import { OfferingSlip } from "@/components/OfferingSlip";
 import { hologram } from "@/content/hologram";
 import { certificatePage, verdictPage } from "@/content/verdict";
 import { BRAND, mailbox } from "@/lib/brand";
@@ -54,6 +55,7 @@ export default async function CertificatePage({ params }: Props) {
           <p className="serif-warm mt-6 text-2xl text-[#1A1740]">“{petition.wish}”</p>
           <p className="mt-6 font-mono text-sm tracking-[0.12em] text-[#1A1740]">{petition.status}</p>
           <p className="serif-warm mt-6 text-xl italic text-[#1A1740]">{hologram.offeringReceived}</p>
+          <OfferingSlip petitionId={id} />
           <p className="serif-warm mt-4 text-xl italic text-[#1A1740]">{petition.panditReply ?? verdictPage.panditFallback}</p>
           <p className="mt-8 font-mono text-xs tracking-[0.14em] text-[#1A1740]">SOUL ID {id}</p>
           <p className="mt-2 font-mono text-xs text-[#1A1740]">{when}</p>

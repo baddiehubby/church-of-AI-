@@ -1,4 +1,4 @@
-// Assumptions: Sacha Pandit Premium is $10/month, distinct from the $10 visa wish and from the PWYW offering.
+// Assumptions: Sacha Pandit Premium is $10/month, distinct from the $10 blessing/offering and from the optional Visa Wish Certificate.
 // English only for now; TODO: Hindi copy later. Recurring billing is disclosed before checkout. Nothing here
 // promises that a wish, visa, job, or relationship will be granted.
 
@@ -12,7 +12,8 @@ export const premium = {
   loginCta: "SIGN IN TO CONTINUE",
   journalCta: "OPEN YOUR JOURNAL →",
   dailyCta: "TODAY'S GUIDANCE →",
-  unconfigured: "Premium checkout is not configured on this site yet. Free wishes still work.",
+  unconfigured: "THE PREMIUM DESK IS NOT CONNECTED YET. FREE WISHES STILL WORK.",
+  unconfiguredPandit: "the premium desk is still being set. free wishes still work, beta.",
   loginUnconfigured: "Sign-in is not configured on this site yet. Free wishes still work.",
   billing: [
     "Billed every month until you cancel.",
@@ -23,7 +24,7 @@ export const premium = {
   notice:
     "Entertainment only. Premium does not issue visas, influence immigration, guarantee a wish, or replace advice from a professional.",
   distinguish:
-    "Premium is $10/month recurring. The Visa Wish is a separate $10 one-time reading and certificate. An offering is a separate one-time tip (minimum $10) for a petition certificate. Purchases are never combined.",
+    "Sacha Pandit Premium is $10 USD per month, recurring. A blessing is a separate $10 one-time offering. The Visa Wish Certificate is a separate $10 one-time reading. An offering on the verdict desk is a separate one-time tip (minimum $10). Purchases are never combined.",
   features: [
     { title: "PERSONAL WISH COMPANION", body: "Describe a wish, goal, or problem. Receive a personalized AI reading. Never a prediction that it will come true." },
     { title: "DAILY GUIDANCE", body: "One short reflection each UTC day, drawn from your saved goals. It is not regenerated on every refresh." },
@@ -36,7 +37,7 @@ export const premium = {
   // TODO: Hindi later. Ship English only for now.
   localeNote: "Readings are in English for now.",
   errors: {
-    unconfigured: "Premium checkout is not configured on this site yet. Free wishes still work.",
+    unconfigured: "THE PREMIUM DESK IS NOT CONNECTED YET. FREE WISHES STILL WORK.",
     rate: "TOO MANY CHECKOUTS FROM THIS CONNECTION. WAIT TEN MINUTES.",
     nap: "CHECKOUT IS TAKING A NAP. TRY AGAIN IN A MINUTE.",
     auth: "SIGN IN TO UNLOCK PREMIUM.",

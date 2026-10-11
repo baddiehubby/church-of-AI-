@@ -1,6 +1,7 @@
 // Assumptions: one Lemon Squeezy integration, three variants. LEMON_SQUEEZY_VARIANT_ID is the existing
-// pay-what-you-want petition offering (customPrice in cents, $10-$500, one-time). LEMON_SQUEEZY_VISA_VARIANT_ID is the $10
-// visa wish. LEMON_SQUEEZY_PREMIUM_VARIANT_ID is the $10/month subscription. Visa and Premium never send customPrice.
+// pay-what-you-want petition offering and the visa-desk $10 blessing (customPrice in cents, $10-$500, one-time,
+// kind certificate). LEMON_SQUEEZY_VISA_VARIANT_ID is the optional $10 Visa Wish Certificate.
+// LEMON_SQUEEZY_PREMIUM_VARIANT_ID is the $10/month subscription. Visa and Premium never send customPrice.
 // Visa custom data carries only { kind: "visa", reference_id }; the wish text never leaves the server.
 // The SDK has no abort option, so a 5s timeout races the request. Every failure is CheckoutUnavailableError
 // (reason "not configured" when env is missing) so routes can show the right in-page message.
@@ -73,6 +74,10 @@ async function runCheckout(
 
 const checkoutLook = { buttonColor: "#6E1E23", buttonTextColor: "#F2EDE4", dark: true } as const;
 
+export function petitionCheckoutConfigured(): boolean {
+  return lemonConfig() !== null;
+}
+
 export function visaCheckoutConfigured(): boolean {
   return visaLemonConfig() !== null;
 }
@@ -85,13 +90,23 @@ export function tipCheckoutVariantEnv(): typeof CHECKOUT_VARIANT_ENV.certificate
   return CHECKOUT_VARIANT_ENV.certificate;
 }
 
-export async function createPetitionCheckout(input: { petitionId: string; name: string; amountCents: number }): Promise<string> {
+function checkoutOrigin(origin: string | undefined): string {
+  const trimmed = origin?.trim().replace(/\/+$/, "") ?? "";
+  return trimmed || appUrl();
+}
+
+export async function createPetitionCheckout(input: {
+  petitionId: string;
+  name: string;
+  amountCents: number;
+  origin?: string;
+}): Promise<string> {
   const config = lemonConfig();
   if (!config) throw new CheckoutUnavailableError("not configured");
   if (!Number.isInteger(input.amountCents) || input.amountCents < OFFERING_MIN_CENTS) {
     throw new CheckoutUnavailableError("request failed");
   }
-  const origin = appUrl();
+  const origin = checkoutOrigin(input.origin);
   const id = encodeURIComponent(input.petitionId);
   return runCheckout(
     config,
@@ -109,10 +124,10 @@ export async function createPetitionCheckout(input: { petitionId: string; name: 
   );
 }
 
-export async function createVisaCheckout(input: { referenceId: string; certificateNo: string }): Promise<string> {
+export async function createVisaCheckout(input: { referenceId: string; certificateNo: string; origin?: string }): Promise<string> {
   const config = visaLemonConfig();
   if (!config) throw new CheckoutUnavailableError("not configured");
-  const link = `${appUrl()}/visa/${encodeURIComponent(input.referenceId)}`;
+  const link = `${checkoutOrigin(input.origin)}/visa/${encodeURIComponent(input.referenceId)}`;
   return runCheckout(
     config,
     {
@@ -128,10 +143,10 @@ export async function createVisaCheckout(input: { referenceId: string; certifica
   );
 }
 
-export async function createPremiumCheckout(input: { profileId: string; email: string }): Promise<string> {
+export async function createPremiumCheckout(input: { profileId: string; email: string; origin?: string }): Promise<string> {
   const config = premiumLemonConfig();
   if (!config) throw new CheckoutUnavailableError("not configured");
-  const origin = appUrl();
+  const origin = checkoutOrigin(input.origin);
   return runCheckout(
     config,
     {

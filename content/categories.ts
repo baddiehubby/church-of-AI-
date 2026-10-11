@@ -1,6 +1,7 @@
 // Assumptions: the eleven wish categories. Visa categories imply a destination (Europe asks for a Schengen country
-// or "Other") and go to the $10 visa checkout; every other category keeps the free reading. `label` is also what
-// the reading prompt sees. Ids are stable because they are stored on petitions and visa_wishes rows.
+// or "Other") and open the blessing altar ($10 one-time offering) plus Premium; an optional Visa Wish Certificate
+// stays available when that variant is connected. Every other category keeps the free reading. `label` is also
+// what the reading prompt sees. Ids are stable because they are stored on petitions and visa_wishes rows.
 
 export type CategoryKind = "visa" | "wish";
 

@@ -27,7 +27,7 @@ export const terms: LegalPage = {
     },
     {
       heading: "What you buy",
-      body: "Three separate digital entertainment products. (1) An offering: a one-time tip for a petition certificate, minimum $10 USD (up to $500). Not a subscription. (2) A Visa Wish: $10 one-time for a reading and Visa Wish Certificate. (3) Sacha Pandit Premium: $10 per month for a private journal, daily guidance, follow-ups, shareable cards, and hologram access where supported. Lemon Squeezy is the merchant of record. Purchases are never combined. None of these make a wish come true or influence any authority.",
+      body: "Three separate digital entertainment products. (1) A blessing / offering: a one-time tip for a petition certificate, minimum $10 USD (up to $500). Not a subscription. On visa categories the primary $10 payment is this blessing. (2) A Visa Wish Certificate: $10 one-time for a reading and certificate, when that product is connected. (3) Sacha Pandit Premium: $10 per month for a private journal, daily guidance, follow-ups, shareable cards, and hologram access where supported. Lemon Squeezy is the merchant of record. Purchases are never combined. None of these make a wish come true or influence any authority.",
     },
     {
       heading: "Premium billing",

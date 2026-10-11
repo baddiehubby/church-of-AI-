@@ -161,53 +161,169 @@ body {
   }
 }
 
-/* Hologram: CSS over the still portrait. No flash, no audio. Static class drops motion. */
+/* Hologram: CSS over the still portrait. Transform/opacity only. No flash, no audio. */
 .hologram-stage {
+  --hx: 50%;
+  --hy: 40%;
   isolation: isolate;
 }
 
+.hologram-activate {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hologram:has(.hologram-activate:focus-visible) .hologram-stage {
+  outline: 2px solid var(--brass-light);
+  outline-offset: 3px;
+}
+
+.hologram-frame {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 42%;
+}
+
 .hologram-wash,
+.hologram-rim,
+.hologram-shimmer,
 .hologram-scan,
 .hologram-particles,
-.hologram-anger {
+.hologram-floor,
+.hologram-follow,
+.hologram-pulse,
+.hologram-anger,
+.hologram-hint {
   pointer-events: none;
   position: absolute;
+}
+
+.hologram-wash,
+.hologram-rim,
+.hologram-scan,
+.hologram-follow,
+.hologram-pulse,
+.hologram-anger {
   inset: 0;
 }
 
 .hologram-wash {
   background:
-    radial-gradient(ellipse at 50% 40%, rgba(0, 200, 255, 0.18), transparent 62%),
-    linear-gradient(180deg, rgba(226, 196, 138, 0.08), transparent 40%, rgba(0, 200, 255, 0.12));
+    radial-gradient(ellipse 46% 50% at 50% 36%, transparent 0 58%, rgba(0, 200, 255, 0.14) 100%),
+    linear-gradient(180deg, rgba(226, 196, 138, 0.08), transparent 36%, rgba(0, 180, 186, 0.08));
   mix-blend-mode: screen;
+  opacity: 0.88;
+}
+
+.hologram-rim {
+  box-shadow:
+    inset 0 0 36px rgba(0, 200, 255, 0.2),
+    inset 0 0 80px rgba(64, 196, 196, 0.1),
+    inset 0 -32px 44px rgba(226, 196, 138, 0.16);
+  opacity: 0.95;
+}
+
+.hologram-shimmer {
+  inset: -18%;
+  background: linear-gradient(
+    118deg,
+    transparent 36%,
+    rgba(226, 196, 138, 0.1) 48%,
+    rgba(0, 200, 255, 0.07) 52%,
+    transparent 64%
+  );
+  mix-blend-mode: screen;
+  opacity: 0.2;
 }
 
 .hologram-scan {
   background: repeating-linear-gradient(
     to bottom,
-    rgba(0, 200, 255, 0.08) 0,
-    rgba(0, 200, 255, 0.08) 1px,
+    rgba(0, 200, 255, 0.045) 0,
+    rgba(0, 200, 255, 0.045) 1px,
     transparent 1px,
-    transparent 7px
+    transparent 9px
   );
-  opacity: 0.55;
-}
-
-.hologram-live .hologram-scan {
-  animation: hologram-scan 9s linear infinite;
+  opacity: 0.22;
 }
 
 .hologram-particles {
+  inset: -22%;
   background-image:
-    radial-gradient(circle, rgba(0, 200, 255, 0.7) 0 1px, transparent 2px),
-    radial-gradient(circle, rgba(226, 196, 138, 0.6) 0 1px, transparent 2px);
-  background-size: 120px 80px, 90px 110px;
-  background-position: 10% 20%, 70% 60%;
-  opacity: 0.35;
+    radial-gradient(circle, rgba(0, 200, 255, 0.55) 0 0.7px, transparent 1.4px),
+    radial-gradient(circle, rgba(226, 196, 138, 0.45) 0 0.7px, transparent 1.4px);
+  background-size: 150px 110px, 130px 150px;
+  background-position: 12% 18%, 68% 62%;
+  opacity: 0.28;
+}
+
+.hologram-floor {
+  left: 8%;
+  right: 8%;
+  bottom: 0;
+  height: 32%;
+  background: radial-gradient(ellipse at 50% 92%, rgba(226, 196, 138, 0.32), transparent 72%);
+  opacity: 0.62;
+}
+
+.hologram-follow {
+  background: radial-gradient(circle 42% at var(--hx) var(--hy), rgba(0, 200, 255, 0.08), transparent 70%);
+  mix-blend-mode: screen;
+  opacity: 0.5;
+}
+
+.hologram-pulse {
+  background:
+    radial-gradient(ellipse at 50% 42%, rgba(0, 200, 255, 0.12), transparent 58%),
+    radial-gradient(ellipse at 50% 88%, rgba(226, 196, 138, 0.18), transparent 55%);
+  mix-blend-mode: screen;
+  opacity: 0;
+}
+
+.hologram-hint {
+  right: 0;
+  bottom: 0.7rem;
+  left: 0;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  color: var(--brass-light);
+  text-align: center;
+  text-shadow: 0 1px 8px rgba(15, 14, 46, 0.85);
+}
+
+.hologram-live .hologram-frame {
+  animation: hologram-alive 8.7s ease-in-out infinite;
+}
+
+.hologram-live .hologram-scan {
+  animation: hologram-scan 16s linear infinite;
 }
 
 .hologram-live .hologram-particles {
-  animation: hologram-drift 14s linear infinite;
+  animation: hologram-drift 18s linear infinite;
+}
+
+.hologram-live .hologram-shimmer {
+  animation: hologram-shimmer 11.4s ease-in-out infinite;
+}
+
+.hologram-live .hologram-floor {
+  animation: hologram-floor 6.8s ease-in-out infinite;
+}
+
+.hologram-pulsing .hologram-pulse {
+  animation: hologram-pulse 760ms ease-out;
 }
 
 .hologram-anger {
@@ -233,17 +349,73 @@ body {
   box-shadow: inset 0 0 36px rgba(226, 196, 138, 0.35), 0 0 20px rgba(0, 200, 255, 0.15);
 }
 
+.hologram[data-mood="welcome"] .hologram-rim {
+  opacity: 1;
+}
+
+.hologram[data-mood="welcome"] .hologram-floor {
+  opacity: 0.72;
+}
+
 .hologram[data-mood="processing"] .hologram-wash {
-  background: radial-gradient(ellipse at 50% 40%, rgba(0, 200, 255, 0.28), transparent 62%);
+  background: radial-gradient(ellipse 55% 50% at 50% 36%, transparent 0 46%, rgba(0, 200, 255, 0.16) 100%);
 }
 
 .hologram-static .hologram-scan,
-.hologram-static .hologram-particles {
+.hologram-static .hologram-particles,
+.hologram-static .hologram-shimmer,
+.hologram-static .hologram-frame,
+.hologram-static .hologram-floor,
+.hologram-static .hologram-pulse {
   animation: none;
+}
+
+.hologram-static .hologram-scan,
+.hologram-static .hologram-particles,
+.hologram-static .hologram-shimmer,
+.hologram-static .hologram-follow,
+.hologram-static .hologram-pulse {
+  opacity: 0;
+}
+
+.hologram-paused .hologram-scan,
+.hologram-paused .hologram-particles,
+.hologram-paused .hologram-shimmer,
+.hologram-paused .hologram-frame,
+.hologram-paused .hologram-floor {
+  animation-play-state: paused;
+}
+
+.hologram-paused .hologram-particles,
+.hologram-paused .hologram-scan,
+.hologram-paused .hologram-shimmer,
+.hologram-paused .hologram-follow {
+  opacity: 0;
 }
 
 .hologram-caption {
   min-height: 2.5rem;
+}
+
+@keyframes hologram-alive {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  18% {
+    transform: translate3d(0.28%, -0.22%, 0) scale(1.004);
+  }
+  41% {
+    transform: translate3d(-0.18%, 0.12%, 0) scale(1.011);
+  }
+  63% {
+    transform: translate3d(0.12%, 0.26%, 0) scale(1.006);
+  }
+  84% {
+    transform: translate3d(-0.08%, -0.1%, 0) scale(1.012);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
 }
 
 @keyframes hologram-scan {
@@ -251,17 +423,117 @@ body {
     transform: translateY(0);
   }
   to {
-    transform: translateY(7px);
+    transform: translateY(6px);
   }
 }
 
 @keyframes hologram-drift {
   from {
-    background-position: 10% 20%, 70% 60%;
+    transform: translate3d(0, 0, 0);
   }
   to {
-    background-position: 18% 80%, 62% 10%;
+    transform: translate3d(-3%, -6%, 0);
   }
+}
+
+@keyframes hologram-shimmer {
+  from {
+    transform: translate3d(-8%, 0, 0);
+  }
+  to {
+    transform: translate3d(8%, 0, 0);
+  }
+}
+
+@keyframes hologram-floor {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  45% {
+    opacity: 0.68;
+  }
+}
+
+@keyframes hologram-pulse {
+  0% {
+    opacity: 0;
+  }
+  22% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (pointer: coarse), (max-width: 640px) {
+  .hologram-particles {
+    background-size: 190px 150px, 170px 190px;
+    opacity: 0.14;
+  }
+  .hologram-scan {
+    opacity: 0.12;
+  }
+  .hologram-wash {
+    opacity: 0.68;
+  }
+  .hologram-shimmer {
+    opacity: 0.08;
+  }
+  .hologram-follow {
+    display: none;
+  }
+}
+
+.prediction-pop {
+  pointer-events: none;
+  margin-top: 1.25rem;
+  border: 1px solid rgba(184, 137, 74, 0.45);
+  background: rgba(15, 14, 46, 0.55);
+  padding: 0.9rem 1rem;
+  opacity: 1;
+  transition: opacity 420ms ease;
+}
+
+.prediction-pop-out {
+  opacity: 0;
+}
+
+.altar-desk {
+  box-shadow: 0 0 0 6px rgba(184, 137, 74, 0.12), 0 18px 40px rgba(0, 0, 0, 0.28);
+}
+
+.altar-bowl {
+  position: relative;
+  height: 4.5rem;
+  margin: 0 auto 0.5rem;
+  max-width: 13rem;
+}
+
+.altar-bowl-rim {
+  position: absolute;
+  inset: 22% 8% auto;
+  height: 2.5rem;
+  border: 2px solid #b8894a;
+  border-radius: 50%;
+  box-shadow: inset 0 12px 18px rgba(26, 23, 64, 0.14);
+}
+
+.altar-bowl-well {
+  position: absolute;
+  inset: 34% 22% auto;
+  height: 1.45rem;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 40%, rgba(110, 30, 35, 0.2), transparent 72%);
+}
+
+.altar-selected {
+  text-align: center;
+}
+
+.offering-slip {
+  background-image: linear-gradient(180deg, rgba(184, 137, 74, 0.1), transparent 70%);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -276,7 +548,15 @@ body {
     transition-duration: 0.01ms !important;
   }
   .hologram-scan,
-  .hologram-particles {
+  .hologram-particles,
+  .hologram-shimmer,
+  .hologram-follow,
+  .hologram-pulse {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+  .hologram-frame,
+  .hologram-floor {
     animation: none !important;
   }
 }

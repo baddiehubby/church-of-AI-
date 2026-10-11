@@ -1,15 +1,18 @@
 // Assumptions: the existing petition offering checkout (PWYW, whole dollars 10-500, one-time), posted by the
-// form on /verdict/<id>. Parse first so every error can return to that verdict with a notice; then rate limit
-// 5 per 10 minutes per hashed IP. The amount is validated server-side and sent as customPrice (>= 1000 cents);
-// the visa wish has its own checkout inside /api/wish and never uses this route. Never a subscription.
+// form on /verdict/<id> and used by the visa-desk blessing ($10, kind certificate). Parse first so every error
+// can return to that verdict with a notice; then rate limit 5 per 10 minutes per hashed IP. The amount is
+// validated server-side and sent as customPrice (>= 1000 cents). The optional Visa Wish Certificate stays on
+// /api/wish with its own variant. Never a subscription.
+// Notice redirects use the request origin when NEXT_PUBLIC_URL is empty or a foreign host.
 
-import { appUrl } from "@/lib/env";
+import { certificateOffer, verdictPage } from "@/content/verdict";
 import { CheckoutUnavailableError, createPetitionCheckout } from "@/lib/lemon";
-import { offeringAmountFromForm, offeringCents } from "@/lib/offering";
 import { logger } from "@/lib/logger";
 import { captureError } from "@/lib/monitor";
+import { offeringAmountFromForm, offeringCents } from "@/lib/offering";
 import { getPetition } from "@/lib/petitions";
 import { rateLimit } from "@/lib/rateLimit";
+import { localRedirect, safeRedirectOrigin } from "@/lib/requestOrigin";
 import { sanitizeName } from "@/lib/sanitizeName";
 import { isPetitionId } from "@/lib/soul-id";
 
@@ -18,9 +21,25 @@ export const dynamic = "force-dynamic";
 
 type Notice = "nap" | "rate" | "invalid" | "name" | "amount";
 
-function back(petitionId: string | null, notice: Notice): Response {
+const noticeCopy: Record<Notice, string> = {
+  nap: verdictPage.notices.nap,
+  rate: verdictPage.notices.rate,
+  invalid: verdictPage.notices.invalid,
+  name: certificateOffer.nameError,
+  amount: certificateOffer.amountError,
+};
+
+function wantsJson(request: Request): boolean {
+  return (request.headers.get("accept") ?? "").includes("application/json");
+}
+
+function back(request: Request, petitionId: string | null, notice: Notice, status = 303): Response {
+  if (wantsJson(request)) {
+    const code = notice === "nap" ? 503 : notice === "rate" ? 429 : 400;
+    return Response.json({ error: noticeCopy[notice], code: notice }, { status: code });
+  }
   const target = petitionId ? `/verdict/${encodeURIComponent(petitionId)}?notice=${notice}#certificate` : `/?notice=upstream#wish`;
-  return Response.redirect(`${appUrl()}${target}`, 303);
+  return localRedirect(request, target, status);
 }
 
 export async function POST(request: Request) {
@@ -28,31 +47,37 @@ export async function POST(request: Request) {
   try {
     form = await request.formData();
   } catch {
-    return back(null, "invalid");
+    return back(request, null, "invalid");
   }
   const rawId = form.get("petition_id");
   const petitionId = typeof rawId === "string" ? rawId.trim().toUpperCase() : "";
-  if (!isPetitionId(petitionId)) return back(null, "invalid");
+  if (!isPetitionId(petitionId)) return back(request, null, "invalid");
 
   const name = sanitizeName(form.get("name"));
-  if (!name.ok) return back(petitionId, "name");
+  if (!name.ok) return back(request, petitionId, "name");
 
   const parsedAmount = offeringAmountFromForm(form.get("amount"), form.get("custom_amount"));
-  if (!parsedAmount.ok) return back(petitionId, "amount");
+  if (!parsedAmount.ok) return back(request, petitionId, "amount");
   const dollars = parsedAmount.dollars;
 
   const limit = await rateLimit(request, "checkout", 5, 10 * 60 * 1000);
-  if (!limit.ok) return back(petitionId, "rate");
+  if (!limit.ok) return back(request, petitionId, "rate");
 
   const petition = await getPetition(petitionId);
-  if (!petition) return back(petitionId, "invalid");
+  if (!petition) return back(request, petitionId, "invalid");
 
   try {
-    const url = await createPetitionCheckout({ petitionId, name: name.value, amountCents: offeringCents(dollars) });
+    const url = await createPetitionCheckout({
+      petitionId,
+      name: name.value,
+      amountCents: offeringCents(dollars),
+      origin: safeRedirectOrigin(request),
+    });
     logger.info("certificate checkout created", { petitionId });
+    if (wantsJson(request)) return Response.json({ checkoutUrl: url });
     return Response.redirect(url, 303);
   } catch (error) {
     if (!(error instanceof CheckoutUnavailableError && error.reason === "not configured")) captureError(error, { petition_id: petitionId });
-    return back(petitionId, "nap");
+    return back(request, petitionId, "nap");
   }
 }

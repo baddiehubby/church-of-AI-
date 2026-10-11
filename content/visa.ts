@@ -1,17 +1,23 @@
-// Assumptions: copy for the $10 visa wish. Offer, notice, success heading, banner, and share caption are the
-// user's exact wording. Never "approved"; the only approval wording allowed is inside the notice
-// ("guarantee visa approval"). The price shown here is display copy; the charged price comes from the Lemon variant.
+// Assumptions: copy for the visa-category altar. The primary product is a $10 one-time blessing
+// (offering / certificate), not a visa SKU wall. Optional Visa Wish Certificate copy stays for when
+// that variant is connected. Never "approved"; the only approval wording allowed is inside the notice
+// ("guarantee visa approval"). The price shown here is display copy; the charged price comes from Lemon.
 
 export const visaOffer = {
-  heading: "YOUR VISA WISH",
-  body: "Submit your visa wish and receive a personalized AI-generated reading and a beautifully designed Visa Wish Certificate.",
-  price: "Price: $10 USD — one-time payment.",
-  cta: "UNLOCK MY VISA WISH — $10",
+  heading: "YOUR BLESSING",
+  body: "Pay $10 now for a blessing. One-time. Entertainment only.",
+  price: "Price: $10 USD — one-time offering.",
+  cta: "PAY $10 NOW — BLESSING",
+  oneTime: "One-time payment. Never a subscription.",
   notice:
     "Entertainment only. Sacha Pandit cannot issue visas, influence immigration decisions, or guarantee visa approval. This purchase does not include a visa application or immigration advice.",
-  unconfigured: "Visa checkout is not configured on this site yet. Free wishes still work; please try the visa wish later.",
+  unconfigured: "THE BLESSING BOWL IS BEING PREPARED. THE PREMIUM DESK IS NOT CONNECTED YET. FREE WISHES STILL WORK.",
+  unconfiguredPandit: "the offering bowl is being prepared. sit. free wishes still work, beta.",
+  visaOptionalHeading: "VISA WISH CERTIFICATE",
+  visaOptionalBody: "A separate one-time Visa Wish Certificate. Not the blessing. Not Premium.",
+  visaOptionalCta: "VISA WISH CERTIFICATE — $10",
   errors: {
-    unconfigured: "Visa checkout is not configured on this site yet. Free wishes still work; please try the visa wish later.",
+    unconfigured: "THE BLESSING BOWL IS BEING PREPARED. THE PREMIUM DESK IS NOT CONNECTED YET. FREE WISHES STILL WORK.",
     rate: "TOO MANY CHECKOUTS FROM THIS CONNECTION. WAIT TEN MINUTES.",
     nap: "CHECKOUT IS TAKING A NAP. TRY AGAIN IN A MINUTE.",
   },

@@ -1,13 +1,14 @@
 // Assumptions: the homepage is the restored altar (hero, wish desk, how it works). ?category= preselects a
-// category (the hero's visa link); ?notice= carries no-JS errors back from /api/wish. The desk only learns whether
-// visa checkout is configured (a boolean), never any key or id. No ledger wall, ticker, or social proof.
+// category (the hero's visa link); ?notice= carries no-JS errors back from /api/wish. The desk only learns
+// whether offering, visa, and Premium checkout are configured (booleans), never any key or id. No ledger
+// wall, ticker, or social proof.
 
 import { AltarDesk } from "@/components/AltarDesk";
 import { Hero } from "@/components/Hero";
 import { DEFAULT_CATEGORY, isCategoryId } from "@/content/categories";
 import { altar, howItWorks } from "@/content/landing";
 import { visaOffer } from "@/content/visa";
-import { visaCheckoutConfigured } from "@/lib/lemon";
+import { petitionCheckoutConfigured, premiumCheckoutConfigured, visaCheckoutConfigured } from "@/lib/lemon";
 import { visaStoreAvailable } from "@/lib/visaWishes";
 
 export const dynamic = "force-dynamic";
@@ -25,11 +26,20 @@ function noticeText(code: string | undefined): string | null {
 export default async function HomePage({ searchParams }: Props) {
   const query = await searchParams;
   const initialCategory = query.category && isCategoryId(query.category) ? query.category : DEFAULT_CATEGORY;
+  const bowlReady = petitionCheckoutConfigured();
   const visaReady = visaCheckoutConfigured() && visaStoreAvailable();
+  const premiumReady = premiumCheckoutConfigured();
   return (
     <>
       <Hero />
-      <AltarDesk key={initialCategory} initialCategory={initialCategory} notice={noticeText(query.notice)} visaReady={visaReady} />
+      <AltarDesk
+        key={initialCategory}
+        initialCategory={initialCategory}
+        notice={noticeText(query.notice)}
+        bowlReady={bowlReady}
+        visaReady={visaReady}
+        premiumReady={premiumReady}
+      />
       <section aria-labelledby="how-heading" className="mx-auto w-full max-w-5xl px-4 pb-16">
         <h2 id="how-heading" className="font-mono text-sm tracking-[0.2em] text-brass-light">
           {howItWorks.heading}
