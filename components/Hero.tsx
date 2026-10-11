@@ -27,10 +27,10 @@ export function Hero() {
             {hero.primaryCta}
           </Link>
           <HologramOfferingLink />
-          <Link href="/premium" className="btn-outline press">
+          <Link href="/pricing" className="btn-outline press">
             {hologram.premiumCta}
           </Link>
-          <Link href={`/?category=${VISA_SHOWCASE_CATEGORY}#wish`} className="btn-outline press">
+          <Link href={`/wish?category=${VISA_SHOWCASE_CATEGORY}#wish`} className="btn-outline press">
             {hero.secondaryCta}
           </Link>
         </div>

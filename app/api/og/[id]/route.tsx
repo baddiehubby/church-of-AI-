@@ -5,6 +5,7 @@ import { ImageResponse } from "next/og";
 
 import { brandHostname } from "@/lib/brand";
 import { loadOgFonts } from "@/lib/ogFonts";
+import { wishFlags } from "@/lib/congregation";
 import { getPetition } from "@/lib/petitions";
 import { isPetitionId } from "@/lib/soul-id";
 import { verdictCard } from "@/lib/verdict-card";
@@ -17,6 +18,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   if (!isPetitionId(id)) return new Response(null, { status: 404, headers: { "Cache-Control": "no-store" } });
   const petition = await getPetition(id);
   if (!petition) return new Response(null, { status: 404, headers: { "Cache-Control": "no-store" } });
+  const linked = await wishFlags(id);
   const fonts = await loadOgFonts();
   const download = new URL(request.url).searchParams.get("download") === "1";
   return new ImageResponse(
@@ -27,6 +29,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       sacrifices: petition.sacrifices,
       pandit: petition.panditReply ?? "acha, the Algorithm is busy. sit for a minute, beta.",
       host: brandHostname(),
+      soulId: linked?.userId,
     }),
     {
       width: 1200,

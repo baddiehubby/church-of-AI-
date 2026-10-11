@@ -1,12 +1,22 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState, type FormEvent } from "react";
 
 import { Disclaimer } from "@/components/Disclaimer";
 import { premium } from "@/content/premium";
 import { isRecord } from "@/lib/guards";
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
+  const next = useSearchParams().get("next") ?? "";
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [devLink, setDevLink] = useState<string | null>(null);
@@ -21,7 +31,7 @@ export default function LoginPage() {
       const response = await fetch("/api/auth/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, next }),
       });
       const payload: unknown = await response.json();
       const record = isRecord(payload) ? payload : {};

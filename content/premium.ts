@@ -1,3 +1,5 @@
+import { rateLimitCopy } from "@/content/safety";
+
 // Assumptions: Sacha Pandit Premium is $10/month, distinct from the $10 blessing/offering and from the optional Visa Wish Certificate.
 // English only for now; TODO: Hindi copy later. Recurring billing is disclosed before checkout. Nothing here
 // promises that a wish, visa, job, or relationship will be granted.
@@ -39,7 +41,7 @@ export const premium = {
   localeNote: "Readings are in English for now.",
   errors: {
     unconfigured: "THE PREMIUM DESK IS NOT CONNECTED YET. FREE WISHES STILL WORK.",
-    rate: "TOO MANY CHECKOUTS FROM THIS CONNECTION. WAIT TEN MINUTES.",
+    rate: rateLimitCopy.checkout,
     nap: "CHECKOUT IS TAKING A NAP. TRY AGAIN IN A MINUTE.",
     auth: "SIGN IN TO UNLOCK PREMIUM.",
     email: "THAT EMAIL CANNOT BE FILED.",

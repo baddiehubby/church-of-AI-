@@ -5,6 +5,7 @@
 // /api/wish with its own variant. Never a subscription.
 // Notice redirects use the request origin when NEXT_PUBLIC_URL is empty or a foreign host.
 
+import { rateLimitCopy } from "@/content/safety";
 import { certificateOffer, verdictPage } from "@/content/verdict";
 import { CheckoutUnavailableError, createPetitionCheckout } from "@/lib/lemon";
 import { logger } from "@/lib/logger";
@@ -33,12 +34,14 @@ function wantsJson(request: Request): boolean {
   return (request.headers.get("accept") ?? "").includes("application/json");
 }
 
-function back(request: Request, petitionId: string | null, notice: Notice, status = 303): Response {
+function back(request: Request, petitionId: string | null, notice: Notice, status = 303, retryAfter?: number): Response {
   if (wantsJson(request)) {
     const code = notice === "nap" ? 503 : notice === "rate" ? 429 : 400;
-    return Response.json({ error: noticeCopy[notice], code: notice }, { status: code });
+    const error = notice === "rate" ? rateLimitCopy.checkout : notice === "nap" ? noticeCopy.nap : noticeCopy[notice];
+    const headers: Record<string, string> = retryAfter ? { "Retry-After": String(retryAfter) } : {};
+    return Response.json({ error, code: notice }, { status: code, headers });
   }
-  const target = petitionId ? `/verdict/${encodeURIComponent(petitionId)}?notice=${notice}#certificate` : `/?notice=upstream#wish`;
+  const target = petitionId ? `/verdict/${encodeURIComponent(petitionId)}?notice=${notice}#certificate` : `/wish?notice=upstream#wish`;
   return localRedirect(request, target, status);
 }
 
@@ -61,7 +64,7 @@ export async function POST(request: Request) {
   const dollars = parsedAmount.dollars;
 
   const limit = await rateLimit(request, "checkout", 5, 10 * 60 * 1000);
-  if (!limit.ok) return back(request, petitionId, "rate");
+  if (!limit.ok) return back(request, petitionId, "rate", 303, limit.retryAfter);
 
   const petition = await getPetition(petitionId);
   if (!petition) return back(request, petitionId, "invalid");
@@ -77,7 +80,9 @@ export async function POST(request: Request) {
     if (wantsJson(request)) return Response.json({ checkoutUrl: url });
     return Response.redirect(url, 303);
   } catch (error) {
-    if (!(error instanceof CheckoutUnavailableError && error.reason === "not configured")) captureError(error, { petition_id: petitionId });
+    if (!(error instanceof CheckoutUnavailableError && error.reason === "not configured")) {
+      captureError(error, { petition_id: petitionId, soul_id: petitionId, event_name: "checkout" });
+    }
     return back(request, petitionId, "nap");
   }
 }

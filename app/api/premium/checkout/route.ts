@@ -41,7 +41,7 @@ export async function POST(request: Request): Promise<Response> {
     return Response.redirect(new URL("/premium", request.url), 303);
   }
   const limit = await rateLimit(request, "checkout", 5, 10 * 60 * 1000);
-  if (!limit.ok) return Response.json({ error: premium.errors.rate }, { status: 429 });
+  if (!limit.ok) return Response.json({ error: premium.errors.rate }, { status: 429, headers: { "Retry-After": String(limit.retryAfter) } });
   try {
     const url = await createPremiumCheckout({
       profileId: session.profileId,
@@ -52,7 +52,7 @@ export async function POST(request: Request): Promise<Response> {
     return Response.redirect(url, 303);
   } catch (error) {
     if (!(error instanceof CheckoutUnavailableError && error.reason === "not configured")) {
-      captureError(error, { subscription_id: session.profileId });
+      captureError(error, { event_name: "premium_checkout" });
     }
     return Response.json({ error: premium.errors.nap }, { status: 503 });
   }

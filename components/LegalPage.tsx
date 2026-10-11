@@ -1,5 +1,7 @@
 // Assumptions: shared plain layout for Terms, Privacy, and Refunds; copy lives in content/legal.ts.
+// The exact site disclaimer is also rendered here so policy pages carry it in the article, not only the footer.
 
+import { Disclaimer } from "@/components/Disclaimer";
 import type { LegalPage as LegalPageCopy } from "@/content/legal";
 
 export function LegalPage({ page }: { page: LegalPageCopy }) {
@@ -12,6 +14,9 @@ export function LegalPage({ page }: { page: LegalPageCopy }) {
           <p className="mt-2 leading-relaxed text-bone/90">{section.body}</p>
         </section>
       ))}
+      <div className="mt-10">
+        <Disclaimer surface="void" />
+      </div>
     </article>
   );
 }

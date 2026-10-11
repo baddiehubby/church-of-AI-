@@ -1,3 +1,5 @@
+import { rateLimitCopy } from "@/content/safety";
+
 // Assumptions: copy for the visa-category altar. The primary product is a $10 one-time blessing
 // (offering / certificate), not a visa SKU wall. Optional Visa Wish Certificate copy stays for when
 // that variant is connected. Never "approved"; the only approval wording allowed is inside the notice
@@ -18,7 +20,7 @@ export const visaOffer = {
   visaOptionalCta: "VISA WISH CERTIFICATE — $10",
   errors: {
     unconfigured: "THE BLESSING BOWL IS BEING PREPARED. THE PREMIUM DESK IS NOT CONNECTED YET. FREE WISHES STILL WORK.",
-    rate: "TOO MANY CHECKOUTS FROM THIS CONNECTION. WAIT TEN MINUTES.",
+    rate: rateLimitCopy.checkout,
     nap: "CHECKOUT IS TAKING A NAP. TRY AGAIN IN A MINUTE.",
   },
 } as const;

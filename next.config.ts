@@ -18,6 +18,8 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/og/[id]": ["./assets/fonts/**/*", "./node_modules/harfbuzzjs/dist/*.wasm"],
     "/api/og/certificate/[id]": ["./assets/fonts/**/*", "./node_modules/harfbuzzjs/dist/*.wasm"],
+    "/api/og/sermon/[userId]/[week]": ["./assets/fonts/**/*"],
+    "/api/og/darshan/[id]": ["./assets/fonts/**/*"],
   },
 };
 

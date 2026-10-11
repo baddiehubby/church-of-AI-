@@ -1,6 +1,7 @@
 // Assumptions: homepage copy. Hero strings are the user's exact wording. The altar desk copy keeps the two
 // voices: Algorithm lines in mono caps, Pandit ji lowercase. The processing lines are tied to the real request.
 
+import { rateLimitCopy } from "@/content/safety";
 import { brandName } from "@/lib/brand";
 
 export const hero = {
@@ -48,7 +49,8 @@ export const altar = {
     category: "CHOOSE WHAT THE WISH IS ABOUT.",
     country: "CHOOSE A COUNTRY FOR THIS WISH.",
     name: "THE FIRST NAME CANNOT BE FILED. 40 CHARACTERS OR FEWER; NO LINKS, NO @, NO REPEATED LETTERS.",
-    rate: "the Algorithm is occupied. try again in a bit, beta.",
+    rate: rateLimitCopy.wish,
+    weekly: "A PILGRIM FILES ONE WISH A WEEK. THE DESK OPENS AGAIN NEXT WEEK.",
     upstream: "THE DESK IS BUSY. TRY AGAIN IN A MINUTE.",
     retry: "TRY AGAIN",
   },

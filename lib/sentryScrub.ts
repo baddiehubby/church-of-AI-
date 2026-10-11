@@ -1,9 +1,9 @@
-// Assumptions: Sentry events may only carry petition_id, certificate_no, and order_id. Everything else that could
+// Assumptions: Sentry events may only carry the allowlisted ids below. Everything else that could
 // hold PII is dropped: request (body, cookies, headers, query string), user, and any tags/extra/contexts keys other
-// than the allowlist (so "name" and "email" never survive). Breadcrumb data is filtered the same way and URLs lose
-// their query string. No SDK imports so this file is unit-testable on its own.
+// than the allowlist (so name, email, raw wish, and bodies never survive). Breadcrumb data is filtered the same way
+// and URLs lose their query string. No SDK imports so this file is unit-testable on its own.
 
-const ALLOWED = new Set(["petition_id", "certificate_no", "order_id", "subscription_id"]);
+const ALLOWED = new Set(["petition_id", "soul_id", "reference_id", "order_id", "tier", "event_name", "amount_cents"]);
 
 type Bag = Record<string, unknown>;
 

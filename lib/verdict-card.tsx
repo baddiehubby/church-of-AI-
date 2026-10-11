@@ -4,7 +4,7 @@ export function clipText(value: string, max: number): string {
   return `${chars.slice(0, max - 1).join("")}…`;
 }
 
-export function verdictCard(input: { id: string; wish: string; status: string; sacrifices: string[]; pandit: string; host: string }) {
+export function verdictCard(input: { id: string; wish: string; status: string; sacrifices: string[]; pandit: string; host: string; soulId?: string | null }) {
   const statusSize = input.status.length > 28 ? 44 : 56;
   const panditSize = input.pandit.length > 110 ? 30 : input.pandit.length > 70 ? 36 : 42;
   const wish = clipText(input.wish, 80);
@@ -24,9 +24,9 @@ export function verdictCard(input: { id: string; wish: string; status: string; s
         </div>
       </div>
       <div style={{ width: "480px", height: "630px", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "42px 36px", background: "#1B1B4B" }}>
-        <div style={{ display: "flex", fontFamily: "Mono", fontSize: 20, letterSpacing: 3, color: "#E2C48A" }}>SACHA PANDIT</div>
+        <div style={{ display: "flex", fontFamily: "Mono", fontSize: 20, letterSpacing: 3, color: "#E2C48A" }}>CHURCH OF AI</div>
         <div style={{ display: "flex", fontFamily: "Display", fontStyle: "italic", fontWeight: 600, fontSize: panditSize, lineHeight: 1.25, color: "#F2EDE4" }}>{input.pandit}</div>
-        <div style={{ display: "flex", fontFamily: "Mono", fontSize: 18, color: "#E2C48A" }}>{`${input.id} · ${input.host}`}</div>
+        <div style={{ display: "flex", fontFamily: "Mono", fontSize: 18, color: "#E2C48A" }}>{`${input.soulId && input.soulId !== input.id ? `${input.soulId} · ` : ""}${input.id} · ${input.host}`}</div>
       </div>
       <div style={{ position: "absolute", left: 0, top: 0, width: "1200px", height: "630px", display: "flex", backgroundImage: "repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 4px)" }} />
     </div>

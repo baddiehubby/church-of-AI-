@@ -68,7 +68,7 @@ export default async function VisaSharePage({ params }: Props) {
         <Disclaimer surface="void" />
       </div>
       <p className="mt-8">
-        <Link href="/#wish" className="font-mono text-sm tracking-[0.12em] text-brass-light">
+        <Link href="/wish" className="font-mono text-sm tracking-[0.12em] text-brass-light">
           {visaShare.sharedCta}
         </Link>
       </p>

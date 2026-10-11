@@ -58,7 +58,7 @@ export default async function VisaWishPage({ params }: Props) {
           <Disclaimer surface="void" />
         </div>
         <p className="mt-8">
-          <Link href="/#wish" className="font-mono text-sm tracking-[0.12em] text-brass-light">
+          <Link href="/wish" className="font-mono text-sm tracking-[0.12em] text-brass-light">
             {visaSuccess.own}
           </Link>
         </p>
@@ -79,7 +79,7 @@ export default async function VisaWishPage({ params }: Props) {
           <Disclaimer surface="void" />
         </div>
         <p className="mt-8">
-          <Link href="/#wish" className="font-mono text-sm tracking-[0.12em] text-brass-light">
+          <Link href="/wish" className="font-mono text-sm tracking-[0.12em] text-brass-light">
             {visaSuccess.own}
           </Link>
         </p>
@@ -96,7 +96,7 @@ export default async function VisaWishPage({ params }: Props) {
           <Disclaimer surface="void" />
         </div>
         <p className="mt-8">
-          <Link href="/#wish" className="font-mono text-sm tracking-[0.12em] text-brass-light">
+          <Link href="/wish" className="font-mono text-sm tracking-[0.12em] text-brass-light">
             {visaSuccess.own}
           </Link>
         </p>
@@ -148,7 +148,7 @@ export default async function VisaWishPage({ params }: Props) {
         <Disclaimer surface="void" />
       </div>
       <p className="mt-8">
-        <Link href="/#wish" className="font-mono text-sm tracking-[0.12em] text-brass-light">
+        <Link href="/wish" className="font-mono text-sm tracking-[0.12em] text-brass-light">
           {visaSuccess.own}
         </Link>
       </p>

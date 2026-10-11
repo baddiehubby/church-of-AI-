@@ -10,9 +10,10 @@ import { createHash } from "node:crypto";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
+import { rateLimitCopy } from "@/content/safety";
 import { logger } from "@/lib/logger";
 
-export const RATE_LIMIT_ERROR = "slow down bestie. the algorithm needs a sec.";
+export const RATE_LIMIT_ERROR = rateLimitCopy.wish;
 
 export type LimitResult = { ok: true } | { ok: false; retryAfter: number };
 

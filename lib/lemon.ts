@@ -12,7 +12,8 @@ import { createCheckout, lemonSqueezySetup } from "@lemonsqueezy/lemonsqueezy.js
 
 import { checkoutProduct } from "@/content/checkout";
 import { CHECKOUT_VARIANT_ENV } from "@/lib/checkoutKinds";
-import { appUrl, lemonConfig, premiumLemonConfig, visaLemonConfig } from "@/lib/env";
+import { appUrl, lemonApiKey, lemonConfig, premiumLemonConfig, seatLemonConfig, visaLemonConfig, type SeatTier } from "@/lib/env";
+import { isRecord } from "@/lib/guards";
 import { OFFERING_MIN_CENTS } from "@/lib/offering";
 import { logger } from "@/lib/logger";
 
@@ -160,4 +161,76 @@ export async function createPremiumCheckout(input: { profileId: string; email: s
     },
     { profileId: input.profileId },
   );
+}
+
+export async function createSeatCheckout(input: {
+  tier: SeatTier;
+  userId: string;
+  email: string;
+  origin?: string;
+}): Promise<string> {
+  const config = seatLemonConfig(input.tier);
+  if (!config) throw new CheckoutUnavailableError("not configured");
+  const origin = checkoutOrigin(input.origin);
+  return runCheckout(
+    config,
+    {
+      productOptions: {
+        redirectUrl: `${origin}/account?notice=paid`,
+        receiptLinkUrl: `${origin}/account`,
+        receiptButtonText: checkoutProduct.seatReceiptButton,
+      },
+      checkoutOptions: checkoutLook,
+      checkoutData: {
+        email: input.email,
+        custom: { kind: "seat", tier: input.tier, user_id: input.userId },
+      },
+    },
+    { userId: input.userId },
+  );
+}
+
+async function lemonJson(path: string, method: "GET" | "PATCH", body?: unknown): Promise<Record<string, unknown>> {
+  const apiKey = lemonApiKey();
+  if (!apiKey) throw new CheckoutUnavailableError("not configured");
+  let response: Response;
+  try {
+    response = await fetch(`https://api.lemonsqueezy.com/v1/${path}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        Accept: "application/vnd.api+json",
+        ...(body ? { "Content-Type": "application/vnd.api+json" } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(8_000),
+    });
+  } catch {
+    throw new CheckoutUnavailableError("request failed");
+  }
+  const json: unknown = await response.json().catch(() => null);
+  if (!response.ok || !isRecord(json)) throw new CheckoutUnavailableError("api error");
+  return json;
+}
+
+export async function changeSeatVariant(subscriptionId: string, variantId: string): Promise<void> {
+  const variant = Number(variantId);
+  if (!Number.isInteger(variant)) throw new CheckoutUnavailableError("request failed");
+  await lemonJson(`subscriptions/${encodeURIComponent(subscriptionId)}`, "PATCH", {
+    data: {
+      type: "subscriptions",
+      id: subscriptionId,
+      attributes: { variant_id: variant, invoice_immediately: true },
+    },
+  });
+}
+
+export async function lemonCustomerPortal(subscriptionId: string): Promise<string> {
+  const json = await lemonJson(`subscriptions/${encodeURIComponent(subscriptionId)}`, "GET");
+  const data = isRecord(json.data) ? json.data : null;
+  const attributes = data && isRecord(data.attributes) ? data.attributes : null;
+  const urls = attributes && isRecord(attributes.urls) ? attributes.urls : null;
+  const url = urls && typeof urls.customer_portal === "string" ? urls.customer_portal : "";
+  if (!url.startsWith("https://")) throw new CheckoutUnavailableError("no url");
+  return url;
 }

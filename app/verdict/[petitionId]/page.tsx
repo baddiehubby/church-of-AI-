@@ -7,6 +7,7 @@ import portrait from "@/public/images/sacha-pandit-hero.jpg";
 
 import { Disclaimer } from "@/components/Disclaimer";
 import { HologramPandit } from "@/components/HologramPandit";
+import { OccupiedNotice } from "@/components/OccupiedNotice";
 import { OfferingForm } from "@/components/OfferingForm";
 import { OfferingSlip } from "@/components/OfferingSlip";
 import { PredictionPop } from "@/components/PredictionPop";
@@ -14,10 +15,12 @@ import { PremiumOffer } from "@/components/PremiumOffer";
 import { ShareRow } from "@/components/VerdictTools";
 import { hologram } from "@/content/hologram";
 import { hero } from "@/content/landing";
+import { reportPetition, reportPetitionMailto } from "@/content/safety";
 import { certificateOffer, verdictPage } from "@/content/verdict";
-import { BRAND } from "@/lib/brand";
+import { BRAND, mailbox } from "@/lib/brand";
 import { petitionCheckoutConfigured } from "@/lib/lemon";
-import { getPetition } from "@/lib/petitions";
+import { wishFlags } from "@/lib/congregation";
+import { loadPetition } from "@/lib/petitions";
 import { isPetitionId } from "@/lib/soul-id";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +30,7 @@ type PageProps = { params: Promise<{ petitionId: string }>; searchParams: Promis
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { petitionId } = await params;
   const id = decodeURIComponent(petitionId).trim().toUpperCase();
-  const petition = isPetitionId(id) ? await getPetition(id) : null;
+  const petition = isPetitionId(id) ? await loadPetition(id).then((row) => (row.state === "ok" ? row.value : null)) : null;
   const title = petition ? `${petition.petitionId} · ${verdictPage.reviewed}` : verdictPage.missingTitle;
   const description = petition?.status ?? verdictPage.metaDescription;
   const image = `${BRAND.domain}/api/og/${id}`;
@@ -45,11 +48,15 @@ export default async function VerdictPage({ params, searchParams }: PageProps) {
   const query = await searchParams;
   const id = decodeURIComponent(petitionId).trim().toUpperCase();
   if (!isPetitionId(id)) notFound();
-  const petition = await getPetition(id);
-  if (!petition) notFound();
+  const loaded = await loadPetition(id);
+  if (loaded.state === "occupied") return <OccupiedNotice retryHref={`/verdict/${encodeURIComponent(id)}`} />;
+  if (loaded.state === "missing") notFound();
+  const petition = loaded.value;
   const url = `${BRAND.domain}/verdict/${petition.petitionId}`;
+  const reportHref = reportPetitionMailto(mailbox("report"), petition.petitionId);
   const notice = query.notice && query.notice in verdictPage.notices ? verdictPage.notices[query.notice as keyof typeof verdictPage.notices] : null;
   const pandit = petition.panditReply ?? verdictPage.panditFallback;
+  const flags = await wishFlags(petition.petitionId);
   return (
     <article className="grain bg-[#1B1B4B] px-4 py-12 text-[#F2EDE4] sm:px-5 sm:py-16">
       <div className="petition-scroll mx-auto max-w-3xl px-5 py-8 sm:px-12 sm:py-12">
@@ -62,6 +69,8 @@ export default async function VerdictPage({ params, searchParams }: PageProps) {
           <div className="border-t border-[#B8894A]/70 py-4">
             <dt className="font-mono text-xs tracking-[0.16em] text-[#1A1740]">{verdictPage.statusLabel}</dt>
             <dd className="display mt-2 text-4xl text-[#1A1740] sm:text-6xl">{petition.status}</dd>
+            {flags?.urgent ? <p className="mt-3 font-mono text-xs tracking-[0.12em] text-[#6E1E23]">MARKED URGENT FOR THE NEXT DARSHAN. NO OUTCOME IS PROMISED.</p> : null}
+            {flags?.priority && !flags.urgent ? <p className="mt-3 font-mono text-xs tracking-[0.12em] text-[#6E1E23]">PRIORITY REVIEW. THE READING IS STILL FICTION.</p> : null}
           </div>
           <div className="border-t border-[#B8894A]/70 py-4">
             <dt className="font-mono text-xs tracking-[0.16em] text-[#6E1E23]">{verdictPage.sacrificeHeading}</dt>
@@ -117,7 +126,8 @@ export default async function VerdictPage({ params, searchParams }: PageProps) {
         </div>
         <PremiumOffer />
         <div className="mt-8"><Disclaimer surface="void" /></div>
-        <p className="mt-8"><Link href="/" className="font-mono text-sm tracking-[0.12em] text-[#E2C48A]">{verdictPage.own}</Link></p>
+        <p className="mt-4"><a className="text-xs text-[#D2D0DC] underline" href={reportHref}>{reportPetition.label}</a></p>
+        <p className="mt-8"><Link href="/wish" className="font-mono text-sm tracking-[0.12em] text-[#E2C48A]">{verdictPage.own}</Link></p>
       </div>
     </article>
   );

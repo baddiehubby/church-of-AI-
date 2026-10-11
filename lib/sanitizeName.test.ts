@@ -41,11 +41,12 @@ describe("sanitizeName", () => {
     expect(sanitizeName("@bestie").ok).toBe(false);
   });
 
-  it("rejects 4+ repeated letters or digits but allows 3 and punctuation runs", () => {
+  it("rejects 3+ repeated letters or digits but allows punctuation runs", () => {
+    expect(sanitizeName("aaa").ok).toBe(false);
     expect(sanitizeName("aaaa").ok).toBe(false);
-    expect(sanitizeName("Adaaaa").ok).toBe(false);
-    expect(sanitizeName("1111").ok).toBe(false);
-    expect(sanitizeName("aaa").ok).toBe(true);
+    expect(sanitizeName("Adaaa").ok).toBe(false);
+    expect(sanitizeName("111").ok).toBe(false);
+    expect(sanitizeName("aa").ok).toBe(true);
     expect(sanitizeName("wait...").ok).toBe(true);
     expect(sanitizeName("...").ok).toBe(true);
   });

@@ -36,6 +36,44 @@ export function premiumLemonConfig(): (LemonBase & { variantId: string }) | null
   return base && variantId ? { ...base, variantId } : null;
 }
 
+export type SeatTier = "believer" | "devotee" | "darshan";
+
+const SEAT_VARIANT_ENV: Record<SeatTier, string> = {
+  believer: "LEMON_SQUEEZY_BELIEVER_VARIANT_ID",
+  devotee: "LEMON_SQUEEZY_DEVOTEE_VARIANT_ID",
+  darshan: "LEMON_SQUEEZY_DARSHAN_VARIANT_ID",
+};
+
+export function seatVariantId(tier: SeatTier): string | null {
+  const specific = process.env[SEAT_VARIANT_ENV[tier]]?.trim();
+  if (specific) return specific;
+  if (tier === "believer") return process.env.LEMON_SQUEEZY_PREMIUM_VARIANT_ID?.trim() || null;
+  return null;
+}
+
+export function seatLemonConfig(tier: SeatTier): (LemonBase & { variantId: string }) | null {
+  const base = lemonBase();
+  const variantId = seatVariantId(tier);
+  return base && variantId ? { ...base, variantId } : null;
+}
+
+export function tierForSeatVariant(variantId: string): SeatTier | null {
+  const id = variantId.trim();
+  if (!id) return null;
+  const seats: SeatTier[] = ["darshan", "devotee", "believer"];
+  for (const tier of seats) {
+    const specific = process.env[SEAT_VARIANT_ENV[tier]]?.trim();
+    if (specific && specific === id) return tier;
+  }
+  const premium = process.env.LEMON_SQUEEZY_PREMIUM_VARIANT_ID?.trim();
+  if (premium && premium === id && !process.env.LEMON_SQUEEZY_BELIEVER_VARIANT_ID?.trim()) return "believer";
+  return null;
+}
+
+export function lemonApiKey(): string | null {
+  return process.env.LEMON_SQUEEZY_API_KEY?.trim() || null;
+}
+
 export function sessionSecret(): string | null {
   const secret = process.env.SESSION_SECRET?.trim();
   return secret || null;

@@ -20,9 +20,14 @@ import { logger } from "@/lib/logger";
 import { captureError } from "@/lib/monitor";
 import { getPetition } from "@/lib/petitions";
 import { sanitizeName } from "@/lib/sanitizeName";
+import { sanitizeWish } from "@/lib/sanitizeWish";
 import { isPetitionId } from "@/lib/soul-id";
 import { getServiceClient, isSupabaseConfigured } from "@/lib/supabase";
+import { applyLemonSeat } from "@/lib/congregation";
+import { tierForSeatVariant } from "@/lib/env";
+import { lemonSeatEffect } from "@/lib/lemonSeat";
 import { applySubscriptionEvent } from "@/lib/premium";
+import { isTier } from "@/lib/tiers";
 import { applyPaidOrder, applyRefund, isVisaReference, VisaStoreUnavailable } from "@/lib/visaWishes";
 import { recordWebhookEvent, type WebhookAuditRow, type WebhookKind } from "@/lib/webhookAudit";
 import { verifyWebhookSignature } from "@/lib/webhookSignature";
@@ -84,7 +89,7 @@ async function visaOrder(base: Base, eventName: string, status: string, referenc
   } catch (error) {
     const detail = error instanceof VisaStoreUnavailable ? "store_unavailable" : "store_error";
     logger.error("visa webhook store failed", { orderId, detail });
-    captureError(error, { order_id: orderId });
+    captureError(error, { order_id: orderId, event_name: eventName, reference_id: referenceRaw });
     return respond({ ...ok, outcome: "db_error", detail }, { error: "storage unavailable" }, 500);
   }
 }
@@ -101,6 +106,7 @@ async function certificateOrder(base: Base, eventName: string, status: string, c
   if (!isPetitionId(petitionId)) return respond({ ...ok, outcome: "invalid_payload", detail: "bad_petition_id" }, { received: true }, 200);
   const name = sanitizeName(custom.name);
   const certificateName = name.ok ? name.value : null;
+  if ("wish" in custom) sanitizeWish(custom.wish);
 
   if (!isSupabaseConfigured()) {
     if (process.env.NODE_ENV === "production") {
@@ -116,7 +122,7 @@ async function certificateOrder(base: Base, eventName: string, status: string, c
   const service = getServiceClient();
   const existing = await service.from("certificates").select("petition_id").eq("lemon_order_id", orderId).maybeSingle();
   if (existing.error) {
-    captureError(new Error(`certificate lookup failed: ${existing.error.code}`), { order_id: orderId, petition_id: petitionId });
+    captureError(new Error(`certificate lookup failed: ${existing.error.code}`), { order_id: orderId, petition_id: petitionId, soul_id: petitionId, event_name: eventName });
     return respond({ ...ok, outcome: "db_error", detail: "lookup_failed" }, { error: "storage unavailable" }, 500);
   }
   if (existing.data) return respond({ ...ok, outcome: "duplicate", detail: "order_seen" }, { received: true, duplicate: true }, 200);
@@ -125,7 +131,7 @@ async function certificateOrder(base: Base, eventName: string, status: string, c
   if (inserted.error?.code === "23505") return respond({ ...ok, outcome: "duplicate", detail: "order_constraint" }, { received: true, duplicate: true }, 200);
   if (inserted.error?.code === "23503") return respond({ ...ok, outcome: "invalid_payload", detail: "unknown_petition" }, { received: true }, 200);
   if (inserted.error) {
-    captureError(new Error(`certificate insert failed: ${inserted.error.code}`), { order_id: orderId, petition_id: petitionId });
+    captureError(new Error(`certificate insert failed: ${inserted.error.code}`), { order_id: orderId, petition_id: petitionId, soul_id: petitionId, event_name: eventName });
     return respond({ ...ok, outcome: "db_error", detail: `insert_${inserted.error.code ?? "unknown"}` }, { error: "storage unavailable" }, 500);
   }
 
@@ -158,7 +164,8 @@ export async function POST(request: Request): Promise<Response> {
   const meta = obj(payload.meta);
   const eventName = str(meta.event_name) || null;
   const custom = obj(meta.custom_data);
-  const kind: WebhookKind = custom.kind === "visa" ? "visa" : custom.kind === "premium" ? "premium" : "certificate";
+  const kind: WebhookKind =
+    custom.kind === "visa" ? "visa" : custom.kind === "premium" ? "premium" : custom.kind === "seat" ? "seat" : "certificate";
   const data = obj(payload.data);
   const attributes = obj(data.attributes);
   const orderId = str(data.id).slice(0, 64) || null;
@@ -179,6 +186,9 @@ export async function POST(request: Request): Promise<Response> {
   if (kind === "premium" && eventName && subscriptionEvents.has(eventName)) {
     return premiumSubscription(base, eventName, str(custom.profile_id), orderId, attributes);
   }
+  if (kind === "seat" && eventName && subscriptionEvents.has(eventName)) {
+    return seatSubscription(base, eventName, custom, orderId, attributes);
+  }
 
   if (eventName !== "order_created" && eventName !== "order_refunded") {
     return respond({ ...base, signature_valid: true, outcome: "ignored_event", detail: null }, { received: true, ignored: true }, 200);
@@ -187,8 +197,8 @@ export async function POST(request: Request): Promise<Response> {
 
   const status = str(attributes.status);
   if (kind === "visa") return visaOrder(base, eventName, status, str(custom.reference_id), orderId);
-  if (kind === "premium") {
-    return respond({ ...base, signature_valid: true, outcome: "ignored_event", detail: "premium_order_event" }, { received: true }, 200);
+  if (kind === "premium" || kind === "seat") {
+    return respond({ ...base, signature_valid: true, outcome: "ignored_event", detail: `${kind}_order_event` }, { received: true }, 200);
   }
   return certificateOrder(base, eventName, status, custom, attributes, orderId);
 }
@@ -216,7 +226,31 @@ async function premiumSubscription(base: Base, eventName: string, profileRaw: st
     const outcome = applied.result === "revoked" ? "revoked" : applied.result === "granted" ? "granted" : "issued";
     return respond({ ...ok, outcome, detail: applied.result }, { received: true, live: applied.live }, 200);
   } catch (error) {
-    captureError(error, { subscription_id: subscriptionId });
+    captureError(error, { order_id: subscriptionId ?? undefined, event_name: eventName });
+    return respond({ ...ok, outcome: "db_error", detail: "store_error" }, { error: "storage unavailable" }, 500);
+  }
+}
+
+async function seatSubscription(base: Base, eventName: string, custom: Json, subscriptionId: string | null, attributes: Json): Promise<Response> {
+  const ok = { ...base, signature_valid: true } as const;
+  if (!subscriptionId) return respond({ ...ok, outcome: "invalid_payload", detail: "missing_subscription_id" }, { error: "missing subscription id" }, 400);
+  const rawUser = str(custom.user_id).trim().toUpperCase();
+  const userId = isPetitionId(rawUser) ? rawUser : null;
+  const named = isTier(custom.tier) && custom.tier !== "pilgrim" ? custom.tier : null;
+  const tier = named ?? tierForSeatVariant(str(attributes.variant_id));
+  if (!tier) return respond({ ...ok, outcome: "invalid_payload", detail: "bad_seat" }, { received: true }, 200);
+  let status = str(attributes.status) || "active";
+  if (eventName === "subscription_expired") status = "expired";
+  if (eventName === "subscription_payment_failed") status = "past_due";
+  const endsAt = str(attributes.ends_at) || str(attributes.renews_at) || null;
+  try {
+    const applied = await applyLemonSeat({ userId, subscriptionId, tier, status, endsAt });
+    if (applied === "unknown") return respond({ ...ok, outcome: "invalid_payload", detail: "unknown_soul" }, { received: true }, 200);
+    const effect = lemonSeatEffect(status, endsAt);
+    logger.info("seat subscription", { orderId: subscriptionId, detail: tier });
+    return respond({ ...ok, reference: userId, outcome: effect === "ended" ? "revoked" : "granted", detail: tier }, { received: true }, 200);
+  } catch (error) {
+    captureError(error, { order_id: subscriptionId, event_name: eventName });
     return respond({ ...ok, outcome: "db_error", detail: "store_error" }, { error: "storage unavailable" }, 500);
   }
 }

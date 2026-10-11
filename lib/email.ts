@@ -38,6 +38,42 @@ export async function sendMagicLinkEmail(input: { to: string; url: string }): Pr
   }
 }
 
+export async function sendPoojaReminder(input: { to: string }): Promise<boolean> {
+  const line = "beta, the lamp is dim. one line is enough.";
+  const url = `${appUrl()}/`;
+  const text = [line, "", url, "", disclaimer].join("\n");
+  const html = `<p>${escapeHtml(line)}</p><p><a href="${escapeHtml(url)}">${escapeHtml(url)}</a></p><p>${escapeHtml(disclaimer)}</p>`;
+  return deliver({ to: input.to, subject: "THE ALTAR IS UNLIT", text, html, log: "pooja reminder" });
+}
+
+export async function sendSermonEmail(input: { to: string; week: string; title: string }): Promise<boolean> {
+  const line = "beta, the week is folded. the sermon is on the record.";
+  const url = `${appUrl()}/sermon/${input.week}`;
+  const text = [line, "", input.title, "", url, "", disclaimer].join("\n");
+  const html = `<p>${escapeHtml(line)}</p><p>${escapeHtml(input.title)}</p><p><a href="${escapeHtml(url)}">${escapeHtml(url)}</a></p><p>${escapeHtml(disclaimer)}</p>`;
+  return deliver({ to: input.to, subject: "THE WEEKLY SERMON IS ON THE RECORD", text, html, log: "sermon email" });
+}
+
+async function deliver(input: { to: string; subject: string; text: string; html: string; log: string }): Promise<boolean> {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  if (!apiKey) {
+    logger.info(`${input.log} skipped: resend not configured`);
+    return false;
+  }
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: mailFrom(), to: [input.to], subject: input.subject, text: input.text, html: input.html }),
+      signal: AbortSignal.timeout(8_000),
+    });
+    return response.ok;
+  } catch {
+    logger.error(`${input.log} failed`);
+    return false;
+  }
+}
+
 export async function sendCertificateEmail(input: { to: string; petitionId: string }): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   if (!apiKey) {

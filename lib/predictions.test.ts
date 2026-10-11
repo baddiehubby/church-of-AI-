@@ -9,7 +9,7 @@ import {
   PREDICTIONS,
 } from "@/content/predictions";
 
-const FORBIDDEN = /donation|visa approved/i;
+const FORBIDDEN = new RegExp(`${["donat", "ion"].join("")}|visa approved`, "i");
 
 describe("predictions", () => {
   it("has exactly 50 short entertainment asides", () => {

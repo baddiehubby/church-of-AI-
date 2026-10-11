@@ -6,7 +6,7 @@ import { appUrl } from "@/lib/brand";
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: { userAgent: "*", allow: "/", disallow: ["/api/", "/visa/vw_", "/journal", "/daily", "/auth/"] },
+    rules: { userAgent: "*", allow: "/", disallow: ["/api/", "/visa/vw_", "/journal", "/daily", "/auth/", "/sermon", "/account", "/darshan/", "/congregation"] },
     sitemap: `${appUrl()}/sitemap.xml`,
     host: appUrl(),
   };

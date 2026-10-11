@@ -5,4 +5,5 @@ export const checkoutProduct = {
   receiptButton: "View the certificate",
   visaReceiptButton: "View your wish reading",
   premiumReceiptButton: "Open your journal",
+  seatReceiptButton: "Return to the account",
 } as const;

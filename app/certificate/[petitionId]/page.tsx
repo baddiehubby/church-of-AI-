@@ -3,11 +3,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Disclaimer } from "@/components/Disclaimer";
+import { OccupiedNotice } from "@/components/OccupiedNotice";
 import { OfferingSlip } from "@/components/OfferingSlip";
 import { hologram } from "@/content/hologram";
+import { reportPetition, reportPetitionMailto } from "@/content/safety";
 import { certificatePage, verdictPage } from "@/content/verdict";
 import { BRAND, mailbox } from "@/lib/brand";
-import { getCertificate, getPetition } from "@/lib/petitions";
+import { loadCertificate, loadPetition } from "@/lib/petitions";
 import { isPetitionId } from "@/lib/soul-id";
 
 export const dynamic = "force-dynamic";
@@ -30,16 +32,21 @@ export default async function CertificatePage({ params }: Props) {
   const { petitionId } = await params;
   const id = decodeURIComponent(petitionId).trim().toUpperCase();
   if (!isPetitionId(id)) notFound();
-  const petition = await getPetition(id);
-  if (!petition) notFound();
-  const certificate = await getCertificate(id);
-  const reportHref = `mailto:${mailbox("report")}?subject=${encodeURIComponent(id)}&body=${encodeURIComponent(id)}`;
+  const loaded = await loadPetition(id);
+  if (loaded.state === "occupied") return <OccupiedNotice retryHref={`/certificate/${encodeURIComponent(id)}`} />;
+  if (loaded.state === "missing") notFound();
+  const petition = loaded.value;
+  const sealed = await loadCertificate(id);
+  if (sealed.state === "occupied") return <OccupiedNotice retryHref={`/certificate/${encodeURIComponent(id)}`} />;
+  const certificate = sealed.value;
+  const reportHref = reportPetitionMailto(mailbox("report"), id);
   if (!certificate) {
     return (
       <article className="grain bg-[#1B1B4B] px-5 py-20 text-center text-[#F2EDE4]">
         <meta httpEquiv="refresh" content="8" />
         <p className="mx-auto max-w-xl font-mono text-sm uppercase tracking-[0.14em]">{certificatePage.waiting}</p>
         <div className="mx-auto mt-10 max-w-3xl text-left"><Disclaimer surface="void" /></div>
+        <p className="mt-6"><a className="text-xs text-[#D2D0DC] underline" href={reportHref}>{reportPetition.label}</a></p>
       </article>
     );
   }
@@ -61,7 +68,7 @@ export default async function CertificatePage({ params }: Props) {
           <p className="mt-2 font-mono text-xs text-[#1A1740]">{when}</p>
         </div>
         <div className="mt-8"><Disclaimer surface="void" /></div>
-        <p className="mt-6"><a className="text-sm underline" href={reportHref}>{certificatePage.report}</a></p>
+        <p className="mt-6"><a className="text-xs text-[#D2D0DC] underline" href={reportHref}>{reportPetition.label}</a></p>
         <p className="mt-6"><Link href="/" className="font-mono text-sm tracking-[0.12em] text-[#E2C48A]">{verdictPage.own}</Link></p>
       </div>
     </article>
