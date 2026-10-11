@@ -36,6 +36,8 @@
   --font-serif: var(--font-fraunces), Georgia, serif;
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+  --font-anton: var(--font-anton-face), Impact, sans-serif;
+  --font-playfair: var(--font-playfair-face), Georgia, serif;
 }
 
 html {
@@ -636,6 +638,154 @@ body {
   height: 2.1rem;
 }
 
+.altar-night {
+  position: relative;
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #0a0e27;
+  color: var(--bone);
+}
+
+.altar-grain {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.14;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  animation: altar-grain 0.9s steps(3) infinite;
+}
+
+.altar-veil {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: #050714;
+  opacity: 0;
+  transition: opacity 400ms ease;
+}
+
+.altar-veil-dim {
+  opacity: 0.72;
+}
+
+.altar-mark-dim {
+  opacity: 0.35;
+  transition: opacity 400ms ease;
+}
+
+.altar-stage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem 1rem;
+}
+
+.altar-mark {
+  position: relative;
+  width: min(18rem, 80vw);
+}
+
+.altar-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.altar-flame {
+  position: absolute;
+  left: 50%;
+  bottom: 38%;
+  width: 0.7rem;
+  height: 1.35rem;
+  border-radius: 50% 50% 45% 45%;
+  background: radial-gradient(circle at 50% 70%, #fff6d8, var(--marigold) 46%, var(--sindoor) 82%);
+  transform: translateX(-50%);
+  animation: diya-flicker 1.8s ease-in-out infinite;
+}
+
+.altar-flame-bright {
+  filter: brightness(1.7);
+  animation-duration: 180ms;
+}
+
+.altar-form,
+.altar-scene {
+  display: flex;
+  width: min(28rem, 100%);
+  flex-direction: column;
+  align-items: center;
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.altar-line {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid rgba(226, 196, 138, 0.45);
+  background: transparent;
+  padding: 0.75rem 0.25rem;
+  text-align: center;
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  color: var(--bone);
+  caret-color: #e2c48a;
+}
+
+.altar-line:focus {
+  outline: none;
+  border-bottom-color: #e2c48a;
+}
+
+.altar-line::placeholder {
+  color: rgba(242, 237, 228, 0.45);
+}
+
+.altar-scene {
+  width: min(40rem, 100%);
+  border: 1px solid rgba(226, 196, 138, 0.45);
+  background: rgba(10, 14, 39, 0.72);
+  padding: 1.5rem 1.25rem;
+}
+
+.altar-counsel {
+  max-width: 36rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.55;
+  letter-spacing: 0.04em;
+  color: var(--mist);
+}
+
+.altar-slam {
+  animation: altar-slam 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes altar-grain {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 48px 72px;
+  }
+}
+
+@keyframes altar-slam {
+  from {
+    opacity: 0;
+    transform: translateY(-22px) scale(1.06);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .diya {
   position: relative;
   width: 4.5rem;
@@ -721,5 +871,203 @@ body {
   }
   100% {
     transform: rotate(0);
+  }
+}
+
+.episode-night {
+  position: relative;
+  background: #0a0e27;
+  color: #f4e7d4;
+  padding: 1.5rem 1rem 0;
+}
+
+.episode-frame {
+  position: relative;
+  z-index: 1;
+  max-width: 68rem;
+  margin: 0 auto;
+  border: 1px solid rgba(226, 196, 138, 0.4);
+  padding: clamp(1.25rem, 4vw, 3.5rem);
+}
+
+.episode-mast,
+.episode-gate,
+.episode-close {
+  text-align: center;
+}
+
+.episode-gate {
+  display: flex;
+  min-height: 50dvh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.episode-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  color: #e2c48a;
+}
+
+.episode-mast .episode-kicker + .episode-kicker {
+  margin-top: 0.45rem;
+}
+
+.episode-title {
+  margin-top: 0.75rem;
+  font-family: var(--font-anton);
+  font-size: clamp(2.7rem, 8vw, 6.25rem);
+  line-height: 0.9;
+  letter-spacing: 0.02em;
+  color: #f4e7d4;
+  text-wrap: balance;
+}
+
+.episode-rule {
+  width: 4.5rem;
+  height: 1px;
+  margin: 1.25rem auto;
+  background: #e2c48a;
+}
+
+.episode-cold {
+  max-width: 38rem;
+  margin: 0 auto;
+  font-family: var(--font-playfair);
+  font-style: italic;
+  font-size: clamp(1.2rem, 2.2vw, 1.75rem);
+  line-height: 1.45;
+  color: #f4e7d4;
+}
+
+.episode-scenes {
+  display: grid;
+  gap: 1.75rem 2.5rem;
+  margin: 2.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.episode-scene-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  color: #e85d68;
+}
+
+.episode-quote {
+  margin: 0.45rem 0 0;
+  font-family: var(--font-playfair);
+  font-style: italic;
+  font-size: clamp(1.15rem, 2vw, 1.55rem);
+  line-height: 1.35;
+  color: #f4e7d4;
+  overflow-wrap: anywhere;
+}
+
+.episode-quiet {
+  color: #d2d0dc;
+}
+
+.episode-aside {
+  margin-top: 0.4rem;
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  color: #d2d0dc;
+}
+
+.episode-verdict {
+  margin-top: 2.75rem;
+  background: #f4e7d4;
+  color: #1a1740;
+  padding: clamp(1.25rem, 3vw, 2.25rem);
+}
+
+.episode-signal {
+  width: 2.5rem;
+  height: 2px;
+  margin-bottom: 0.85rem;
+  background: #00c8ff;
+}
+
+.episode-verdict-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  color: #9b2335;
+}
+
+.episode-verdict-body {
+  margin-top: 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  line-height: 1.65;
+  letter-spacing: 0.03em;
+}
+
+.episode-close {
+  margin-top: 2.5rem;
+}
+
+.episode-signoff {
+  font-family: var(--font-playfair);
+  font-style: italic;
+  font-size: 1.35rem;
+  color: #f4e7d4;
+}
+
+.episode-sign-name {
+  margin-top: 0.35rem;
+  font-family: var(--font-playfair);
+  font-style: italic;
+  font-size: 0.95rem;
+  color: #e2c48a;
+}
+
+.episode-cliff {
+  max-width: 34rem;
+  margin: 1.75rem auto 0;
+  font-family: var(--font-playfair);
+  font-style: italic;
+  font-size: clamp(1.25rem, 2.4vw, 1.7rem);
+  line-height: 1.4;
+  color: #e2c48a;
+}
+
+.episode-practice {
+  margin-top: 0.5rem;
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  color: #f4e7d4;
+}
+
+.episode-mail {
+  width: min(18rem, 100%);
+  border: none;
+  border-bottom: 1px solid rgba(226, 196, 138, 0.45);
+  background: transparent;
+  padding: 0.4rem 0.25rem;
+  text-align: center;
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  color: var(--bone);
+  caret-color: #e2c48a;
+}
+
+.episode-mail:focus {
+  outline: none;
+  border-bottom-color: #e2c48a;
+}
+
+.episode-mail::placeholder {
+  color: rgba(242, 237, 228, 0.45);
+}
+
+@media (min-width: 800px) {
+  .episode-scenes {
+    grid-template-columns: 1fr 1fr;
   }
 }

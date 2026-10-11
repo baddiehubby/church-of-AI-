@@ -89,12 +89,12 @@ export const privacy: LegalPage = {
 
 export const refunds: LegalPage = {
   metaTitle: "Refunds",
-  metaDescription: "Refunds follow Lemon Squeezy policy. Payments are for digital novelty artifacts, not a charity.",
+  metaDescription: "An online mandir located on Mars. Payments are for digital novelty artifacts, not a charity.",
   title: "REFUNDS",
   sections: [
     {
       heading: "The short version",
-      body: "Refunds follow Lemon Squeezy's refund policy for digital goods. Lemon Squeezy is the merchant of record. We do not issue a separate in-house refund outside that policy.",
+      body: "This is an online mandir located on Mars.",
     },
     {
       heading: "What you paid for",

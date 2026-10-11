@@ -16,6 +16,7 @@
     "@supabase/supabase-js": "^2.117.3",
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.5",
+    "framer-motion": "^14.1.0",
     "harfbuzzjs": "1.6.3",
     "next": "15.5.27",
     "react": "19.1.0",

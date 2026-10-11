@@ -7,6 +7,7 @@ import "server-only";
 import { disclaimer } from "@/content/site";
 import { brandName, mailbox } from "@/lib/brand";
 import { appUrl } from "@/lib/env";
+import { episodePlain, type Episode } from "@/lib/episodeCompose";
 import { escapeHtml } from "@/lib/html";
 import { logger } from "@/lib/logger";
 
@@ -72,6 +73,37 @@ async function deliver(input: { to: string; subject: string; text: string; html:
     logger.error(`${input.log} failed`);
     return false;
   }
+}
+
+export async function sendEpisodeEmail(input: { to: string; episode: Episode }): Promise<boolean> {
+  const url = `${appUrl()}/episode/${input.episode.week}`;
+  const body = episodePlain(input.episode);
+  const text = [...body, "", url, "", disclaimer].join("\n");
+  const scenes = input.episode.scenes
+    .map((scene) => {
+      const quote = scene.quote ? (scene.withheld ? escapeHtml(scene.quote) : `&ldquo;${escapeHtml(scene.quote)}&rdquo;`) : "the chair stayed empty.";
+      const aside = scene.pandit ? `<p style="margin:4px 0 0;font-style:italic">${escapeHtml(scene.pandit)}</p>` : "";
+      return `<p style="margin:18px 0 0;font-family:ui-monospace,monospace;letter-spacing:0.12em;font-size:12px;color:#E2C48A">SCENE ${scene.index} · ${escapeHtml(scene.weekday.toUpperCase())}</p><p style="margin:6px 0 0;font-family:Georgia,serif;font-size:18px">${quote}</p>${aside}`;
+    })
+    .join("");
+  const html = `<div style="background:#0A0E27;color:#F4E7D4;padding:32px;font-family:Georgia,serif">
+<p style="font-family:ui-monospace,monospace;letter-spacing:0.16em;color:#E2C48A;font-size:12px">SACHA PANDIT · EPISODE</p>
+<h1 style="font-size:36px;line-height:0.95;letter-spacing:0.02em;font-weight:400">${escapeHtml(input.episode.title)}</h1>
+<p style="font-size:20px;font-style:italic;line-height:1.45">${escapeHtml(input.episode.coldOpen)}</p>
+${scenes}
+<div style="margin:28px 0 0;background:#F4E7D4;color:#1A1740;padding:16px">
+<p style="font-family:ui-monospace,monospace;letter-spacing:0.12em;font-size:12px;color:#9B2335">THE ALGORITHM'S WEEKLY VERDICT</p>
+<p style="font-family:ui-monospace,monospace;font-size:14px;line-height:1.6">${escapeHtml(input.episode.verdict)}</p>
+</div>
+<p style="font-size:18px">${escapeHtml(input.episode.signoff)}</p>
+<p style="font-style:italic">pandit ji</p>
+<p style="font-size:20px;font-style:italic;color:#E2C48A">${escapeHtml(input.episode.cliffhanger)}</p>
+<p style="font-family:ui-monospace,monospace;letter-spacing:0.12em;font-size:12px;color:#E2C48A">A PRACTICE</p>
+<p>${escapeHtml(input.episode.practice)}</p>
+<p><a href="${escapeHtml(url)}" style="color:#E2C48A">${escapeHtml(url)}</a></p>
+<p style="color:#D2D0DC;font-size:12px;line-height:1.5">${escapeHtml(disclaimer)}</p>
+</div>`;
+  return deliver({ to: input.to, subject: input.episode.title, text, html, log: "episode email" });
 }
 
 export async function sendCertificateEmail(input: { to: string; petitionId: string }): Promise<boolean> {

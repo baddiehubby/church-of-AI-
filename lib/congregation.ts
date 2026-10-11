@@ -765,6 +765,15 @@ async function allSouls(): Promise<Soul[]> {
   });
 }
 
+export async function tierForEmail(email: string): Promise<Tier> {
+  try {
+    const soul = await selectSoul("email", email);
+    return soul?.tier ?? "pilgrim";
+  } catch {
+    return "pilgrim";
+  }
+}
+
 export async function listSouls(): Promise<Soul[]> {
   try {
     return await allSouls();
@@ -803,24 +812,31 @@ export async function applyStripeState(input: {
   subscriptionId?: string | null;
   tier?: Tier | null;
   status: string;
+  email?: string | null;
 }): Promise<void> {
   const soul = input.userId ? await selectSoul("user_id", input.userId) : input.customerId ? await selectSoul("stripe_customer_id", input.customerId) : null;
   if (!soul) return;
+  const email = !soul.email && input.email?.includes("@") ? input.email.trim() : undefined;
+  const ids = {
+    stripeCustomerId: input.customerId ?? soul.stripeCustomerId,
+    stripeSubscriptionId: input.subscriptionId ?? soul.stripeSubscriptionId,
+    ...(email ? { email } : {}),
+  };
   if (input.status === "active" || input.status === "trialing") {
+    const tier = input.tier && atLeast(input.tier, "believer") ? input.tier : "believer";
     await updateSoul(soul.userId, {
-      tier: input.tier ?? soul.tier,
-      stripeCustomerId: input.customerId ?? soul.stripeCustomerId,
-      stripeSubscriptionId: input.subscriptionId ?? soul.stripeSubscriptionId,
+      ...ids,
+      tier,
       pastDue: false,
       trialUsed: input.status === "trialing" ? true : soul.trialUsed,
     });
     return;
   }
   if (input.status === "past_due") {
-    await updateSoul(soul.userId, { pastDue: true, stripeCustomerId: input.customerId ?? soul.stripeCustomerId, stripeSubscriptionId: input.subscriptionId ?? soul.stripeSubscriptionId });
+    await updateSoul(soul.userId, { ...ids, pastDue: true });
     return;
   }
   if (input.status === "canceled" || input.status === "unpaid" || input.status === "incomplete_expired") {
-    await updateSoul(soul.userId, { tier: "pilgrim", stripeSubscriptionId: null, pastDue: false, stripeCustomerId: input.customerId ?? soul.stripeCustomerId });
+    await updateSoul(soul.userId, { ...ids, tier: "pilgrim", stripeSubscriptionId: null, pastDue: false });
   }
 }

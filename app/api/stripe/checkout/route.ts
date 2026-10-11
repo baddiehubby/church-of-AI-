@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { currentSoul } from "@/lib/congregation";
+import { currentSoul, ensureGuest } from "@/lib/congregation";
 import { safeRedirectOrigin } from "@/lib/requestOrigin";
-import { readSession } from "@/lib/session";
-import { changeSubscriptionPrice, createSubscriptionCheckout, darshanCheckoutOpen, priceIdFor } from "@/lib/stripeBilling";
-import { isTier } from "@/lib/tiers";
+import { createPortal, createSubscriptionCheckout } from "@/lib/stripeBilling";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,27 +12,23 @@ function back(request: Request, path: string): Response {
 }
 
 export async function POST(request: Request): Promise<Response> {
-  const form = await request.formData();
-  const tier = form.get("tier");
-  if (!isTier(tier) || tier === "pilgrim") return back(request, "/pricing");
-  const session = await readSession();
-  if (!session) return back(request, "/login?next=/pricing");
-  const soul = await currentSoul();
-  if (!soul?.email) return back(request, "/login?next=/pricing");
-  if (tier === "darshan" && !darshanCheckoutOpen()) return back(request, "/darshan");
-  if (!priceIdFor(tier)) return back(request, "/pricing?notice=unconfigured");
+  const form = await request.formData().catch(() => null);
+  const tier = form?.get("tier");
+  if (tier !== "believer") return back(request, "/pricing?notice=unconfigured");
+  const soul = (await currentSoul()) ?? (await ensureGuest());
+  if (!soul) return back(request, "/pricing?notice=unconfigured");
   const origin = safeRedirectOrigin(request);
   try {
-    if (soul.stripeSubscriptionId) {
-      await changeSubscriptionPrice(soul.stripeSubscriptionId, tier);
-      return back(request, "/account?notice=paid");
+    if (soul.stripeSubscriptionId && soul.stripeCustomerId) {
+      const url = await createPortal(soul.stripeCustomerId, origin);
+      return NextResponse.redirect(url, 303);
     }
     const url = await createSubscriptionCheckout({
-      tier,
+      tier: "believer",
       email: soul.email,
       userId: soul.userId,
       customerId: soul.stripeCustomerId,
-      trial: tier === "believer" && !soul.trialUsed,
+      trial: false,
       origin,
     });
     return NextResponse.redirect(url, 303);

@@ -34,6 +34,31 @@ export function darshanCheckoutOpen(): boolean {
   return process.env.STRIPE_DARSHAN_OPEN?.trim() === "true" && Boolean(priceIdFor("darshan"));
 }
 
+export const BELIEVER_MONTHLY_CENTS = 999;
+
+export function believerLineItems(priceId: string | null): URLSearchParams {
+  const params = new URLSearchParams();
+  params.set("line_items[0][quantity]", "1");
+  if (priceId) {
+    params.set("line_items[0][price]", priceId);
+    return params;
+  }
+  params.set("line_items[0][price_data][currency]", "usd");
+  params.set("line_items[0][price_data][unit_amount]", String(BELIEVER_MONTHLY_CENTS));
+  params.set("line_items[0][price_data][recurring][interval]", "month");
+  params.set("line_items[0][price_data][product_data][name]", "BELIEVER");
+  return params;
+}
+
+export function stripeSubscriptionEffect(type: string, status: string | null): "grant" | "past_due" | "end" | null {
+  if (type === "customer.subscription.deleted") return "end";
+  if (type !== "customer.subscription.created" && type !== "customer.subscription.updated") return null;
+  if (status === "active" || status === "trialing") return "grant";
+  if (status === "past_due") return "past_due";
+  if (status === "canceled" || status === "unpaid" || status === "incomplete_expired") return "end";
+  return null;
+}
+
 export function stripeId(value: unknown): string | null {
   if (typeof value === "string" && value) return value;
   if (isRecord(value) && typeof value.id === "string") return value.id;
@@ -70,27 +95,33 @@ async function stripe(path: string, method: "GET" | "POST", body?: URLSearchPara
 
 export async function createSubscriptionCheckout(input: {
   tier: PaidTier;
-  email: string;
+  email: string | null;
   userId: string;
   customerId: string | null;
   trial: boolean;
   origin: string;
 }): Promise<string> {
-  const price = priceIdFor(input.tier);
-  if (!stripeSecret() || !price) throw new Error("unconfigured");
+  if (!stripeSecret()) throw new Error("unconfigured");
   const params = new URLSearchParams();
   params.set("mode", "subscription");
-  params.set("success_url", `${input.origin}/account?notice=paid`);
+  params.set("success_url", `${input.origin}/?notice=remembered`);
   params.set("cancel_url", `${input.origin}/pricing?notice=cancelled`);
-  params.set("line_items[0][price]", price);
-  params.set("line_items[0][quantity]", "1");
+  const price = priceIdFor(input.tier);
+  if (input.tier === "believer") {
+    for (const [key, value] of believerLineItems(price).entries()) params.set(key, value);
+  } else if (price) {
+    params.set("line_items[0][price]", price);
+    params.set("line_items[0][quantity]", "1");
+  } else {
+    throw new Error("unconfigured");
+  }
   params.set("client_reference_id", input.userId);
   params.set("metadata[user_id]", input.userId);
   params.set("metadata[tier]", input.tier);
   params.set("subscription_data[metadata][user_id]", input.userId);
   params.set("subscription_data[metadata][tier]", input.tier);
   if (input.customerId) params.set("customer", input.customerId);
-  else params.set("customer_email", input.email);
+  else if (input.email) params.set("customer_email", input.email);
   if (input.trial) params.set("subscription_data[trial_period_days]", "7");
   const json = await stripe("checkout/sessions", "POST", params);
   if (typeof json.url !== "string") throw new Error("stripe");

@@ -82,9 +82,9 @@ export const pricingCopy = {
     {
       id: "believer",
       name: "BELIEVER",
-      price: "$9",
+      price: "$9.99",
       cadence: "a month",
-      points: ["Unlimited poojas", "A weekly sermon in the inbox", "The sermon archive, kept", "Pandit ji's monthly open letter", "The Algorithm remembers past wishes"],
+      points: ["Unlimited poojas", "The weekly episode", "The full archive"],
     },
     {
       id: "devotee",

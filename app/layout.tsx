@@ -1,8 +1,9 @@
 // Assumptions: fonts from next/font/google at build time (Fraunces serif for Pandit ji and display, Inter body,
-// JetBrains Mono for the Algorithm). Header, footer (with the exact disclaimer), and grain wrap every page.
+// JetBrains Mono for the Algorithm). Anton and Playfair are the altar film only. Header, footer (with the exact
+// disclaimer), and grain wrap every page.
 
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
+import { Anton, Fraunces, Inter, JetBrains_Mono, Playfair_Display } from "next/font/google";
 
 import { GrainOverlay } from "@/components/GrainOverlay";
 import { SiteFooter } from "@/components/site-footer";
@@ -15,6 +16,8 @@ import "./globals.css";
 const serif = Fraunces({ subsets: ["latin"], weight: ["500", "800"], style: ["normal", "italic"], variable: "--font-fraunces", display: "swap" });
 const sans = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-jetbrains", display: "swap" });
+const anton = Anton({ subsets: ["latin"], weight: "400", variable: "--font-anton-face", display: "swap" });
+const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500"], style: ["normal", "italic"], variable: "--font-playfair-face", display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl()),
@@ -32,7 +35,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
+    <html lang="en" className={`${serif.variable} ${sans.variable} ${mono.variable} ${anton.variable} ${playfair.variable}`}>
       <body className="antialiased">
         <a href="#content" className="skip-link">
           {site.skip}
