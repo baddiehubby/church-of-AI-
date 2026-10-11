@@ -23,7 +23,7 @@ export function Hero() {
         <p className="display mt-4 text-4xl text-bone sm:text-5xl">{hero.headline}</p>
         <p className="mt-5 max-w-md text-lg leading-relaxed text-bone/90">{hero.body}</p>
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link href="#wish" className="btn-brass press">
+          <Link href="/wish#wish" className="btn-brass press">
             {hero.primaryCta}
           </Link>
           <HologramOfferingLink />

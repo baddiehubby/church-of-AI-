@@ -20,7 +20,7 @@ export const site = {
   footerNavLabel: "Policies",
   notFoundTitle: "THIS PAGE IS NOT IN THE REGISTER.",
   notFoundBody: "acha, nothing filed here, beta. go back and make a wish.",
-  notFoundCta: "RETURN TO THE ALTAR",
+  notFoundCta: "MAKE YOUR WISH",
   errorTitle: "THE DESK HAS STOPPED.",
   errorBody: "REFRESH THE PAGE. THE RECORD WILL WAIT.",
   errorCta: "TRY AGAIN",
