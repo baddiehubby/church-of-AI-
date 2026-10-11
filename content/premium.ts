@@ -4,6 +4,7 @@
 
 export const premium = {
   heading: "SACHA PANDIT PREMIUM",
+  altarTitle: "Sacha Pandit Premium — $10 USD per month",
   price: "Price: $10 USD per month — recurring.",
   lede: "Keep a private wish journal, receive one daily reflection, and continue a thread without starting over. The first reading on the wish desk stays free.",
   cta: "UNLOCK PREMIUM — $10 / MONTH",

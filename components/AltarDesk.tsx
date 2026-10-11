@@ -85,7 +85,8 @@ function AltarPremium({ ready }: { ready: boolean }) {
       <h3 id="altar-premium-heading" className="font-mono text-sm tracking-[0.16em] text-maroon">
         {premium.heading}
       </h3>
-      <p className="mt-3 font-mono text-sm">{premium.price}</p>
+      <p className="mt-3 text-lg leading-relaxed">{premium.altarTitle}</p>
+      <p className="mt-2 font-mono text-sm">{premium.price}</p>
       <p className="mt-2 leading-relaxed">{premium.lede}</p>
       <p className="mt-3 text-sm leading-relaxed">{premium.distinguish}</p>
       <p className="mt-3 text-sm leading-relaxed">{premium.notice}</p>
@@ -95,6 +96,11 @@ function AltarPremium({ ready }: { ready: boolean }) {
             {premium.unconfigured}
           </p>
           <p className="serif-warm mt-2 text-base italic text-ink">{premium.unconfiguredPandit}</p>
+          <p className="mt-4 font-mono text-sm text-[#6E1E23]">{premium.recurringLine}</p>
+          <label className="mt-3 flex cursor-not-allowed items-start gap-3 text-sm leading-relaxed text-[#1A1740]">
+            <input type="checkbox" disabled className="mt-1 h-5 w-5 shrink-0 accent-[#00C8FF]" />
+            <span>{premium.consent}</span>
+          </label>
         </>
       ) : (
         <div className="mt-5">
