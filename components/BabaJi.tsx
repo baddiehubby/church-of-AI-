@@ -14,8 +14,8 @@ const PORTRAIT: Record<BabaPortrait, { webp: string; jpg: string; width: number;
   home: {
     webp: "/images/baba-ji-home.webp",
     jpg: "/images/baba-ji-home.jpg",
-    width: 1024,
-    height: 1536,
+    width: 960,
+    height: 1280,
   },
 };
 

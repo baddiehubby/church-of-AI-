@@ -42,3 +42,9 @@ export const footerNav = [
   { label: "Privacy", href: "/privacy" },
   { label: "Refunds", href: "/refunds" },
 ] as const;
+
+/** Official X account for Religion of Mars. External; open in a new tab. */
+export const socialX = {
+  label: "Follow on X",
+  href: "https://x.com/BUDDIEAIe8dv",
+} as const;

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { BabaJi } from "@/components/BabaJi";
+import { FollowOnX } from "@/components/FollowOnX";
 import { MarsHorizon } from "@/components/MarsHorizon";
 import { OxygenMeter } from "@/components/OxygenMeter";
 import { WorldNav } from "@/components/WorldNav";
@@ -38,9 +39,12 @@ export function MarsWorldHome({
           <BabaJi pose="up" portrait="home" priority />
         </div>
 
-        <a href={marsWorld.enterHref} className="world-enter">
-          {marsWorld.enterCta}
-        </a>
+        <div className="world-cta-row">
+          <a href={marsWorld.enterHref} className="world-enter">
+            {marsWorld.enterCta}
+          </a>
+          <FollowOnX className="world-follow-x" />
+        </div>
 
         <nav className="world-sequence" aria-label="Enter the Religion of Mars">
           <ol>

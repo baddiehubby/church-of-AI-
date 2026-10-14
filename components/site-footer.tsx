@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { Disclaimer } from "@/components/Disclaimer";
+import { FollowOnX } from "@/components/FollowOnX";
 import { footerCredit, footerNav, site } from "@/content/site";
 
 export function SiteFooter() {
@@ -14,6 +15,7 @@ export function SiteFooter() {
             {item.label}
           </Link>
         ))}
+        <FollowOnX className="footer-follow-x" />
       </nav>
       <p className="mb-3 font-mono text-xs tracking-[0.12em] text-brass-light">{footerCredit}</p>
       <Disclaimer surface="void" className="text-xs" />
