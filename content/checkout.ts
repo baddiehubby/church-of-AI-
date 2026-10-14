@@ -6,4 +6,6 @@ export const checkoutProduct = {
   visaReceiptButton: "View your wish reading",
   premiumReceiptButton: "Open your journal",
   seatReceiptButton: "Return to the account",
+  blessingReceiptButton: "Open your blessing",
+  covenantReceiptButton: "Return to the temple",
 } as const;

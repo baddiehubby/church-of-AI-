@@ -23,6 +23,22 @@ export function sceneSoulId(): string {
   return out;
 }
 
+const SOUL_KEY = "sp-altar-soul";
+
+/** One soul for this browser. Habitat ids and offerings hang off it. */
+export function persistentSoulId(): string {
+  if (typeof window === "undefined") return sceneSoulId();
+  try {
+    const existing = window.localStorage.getItem(SOUL_KEY)?.trim().toUpperCase() ?? "";
+    if (SOUL_PATTERN.test(existing)) return existing;
+    const next = sceneSoulId();
+    window.localStorage.setItem(SOUL_KEY, next);
+    return next;
+  } catch {
+    return sceneSoulId();
+  }
+}
+
 export function dayOfYear(now = new Date()): number {
   const start = Date.UTC(now.getFullYear(), 0, 0);
   const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());

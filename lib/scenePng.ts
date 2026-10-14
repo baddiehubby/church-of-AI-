@@ -42,8 +42,8 @@ export async function downloadScenePng(frame: AltarSceneFrame): Promise<void> {
   canvas.height = HEIGHT;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
-  const anton = family("--font-anton-face", "Impact");
-  const mono = family("--font-jetbrains", "ui-monospace");
+  const anton = family("--font-display-face", "Impact");
+  const mono = family("--font-mono-face", "ui-monospace");
   await Promise.all([
     document.fonts.load(`400 28px ${anton}`),
     document.fonts.load(`400 68px ${anton}`),

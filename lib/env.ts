@@ -1,7 +1,15 @@
 // Assumptions: server-side env readers. Existing LEMON_SQUEEZY_* names are kept; LEMON_SQUEEZY_VISA_VARIANT_ID is
 // the $10 visa product and LEMON_SQUEEZY_VARIANT_ID stays the petition certificate. Nothing here reaches the client.
 
+import type { OfferingTier } from "@/content/offerings";
 import { appUrl as origin, BRAND } from "@/lib/brand";
+import { MARS_TIERS, marsVariantId } from "@/lib/marsOfferings";
+import {
+  CHECKOUT_TIERS,
+  redPathVariantId,
+  type CheckoutTier,
+  type OneTimeTier,
+} from "@/lib/redPathOfferings";
 
 export function appUrl(): string {
   return origin();
@@ -68,6 +76,46 @@ export function tierForSeatVariant(variantId: string): SeatTier | null {
   const premium = process.env.LEMON_SQUEEZY_PREMIUM_VARIANT_ID?.trim();
   if (premium && premium === id && !process.env.LEMON_SQUEEZY_BELIEVER_VARIANT_ID?.trim()) return "believer";
   return null;
+}
+
+export function marsOfferingConfig(tier: OfferingTier): (LemonBase & { variantId: string }) | null {
+  const base = lemonBase();
+  const variantId = marsVariantId(tier);
+  return base && variantId ? { ...base, variantId } : null;
+}
+
+export function tierForMarsVariant(variantId: string): OfferingTier | null {
+  const id = variantId.trim();
+  if (!id) return null;
+  for (const tier of MARS_TIERS) {
+    const specific = marsVariantId(tier);
+    if (specific && specific === id) return tier;
+  }
+  return null;
+}
+
+export function redPathOfferingConfig(tier: CheckoutTier): (LemonBase & { variantId: string }) | null {
+  const base = lemonBase();
+  const variantId = redPathVariantId(tier);
+  return base && variantId ? { ...base, variantId } : null;
+}
+
+export function redPathOfferingConfigured(tier: CheckoutTier): boolean {
+  return redPathOfferingConfig(tier) !== null;
+}
+
+export function tierForRedPathVariant(variantId: string): CheckoutTier | null {
+  const id = variantId.trim();
+  if (!id) return null;
+  for (const tier of CHECKOUT_TIERS) {
+    const specific = redPathVariantId(tier);
+    if (specific && specific === id) return tier;
+  }
+  return null;
+}
+
+export function isOneTimeCheckoutTier(tier: CheckoutTier): tier is OneTimeTier {
+  return tier !== "practice_monthly";
 }
 
 export function lemonApiKey(): string | null {

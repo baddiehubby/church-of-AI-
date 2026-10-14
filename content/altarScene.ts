@@ -1,6 +1,8 @@
 // Altar rite copy. The reading comes from /api/pooja. Nothing here says the line comes true.
 
-export const ALTAR_STATUSES = ["UNDER CONSIDERATION", "PROVISIONALLY ACCEPTED", "REQUIRES FURTHER PETITION"] as const;
+import { STATUSES } from "@/content/algorithm";
+
+export const ALTAR_STATUSES = STATUSES;
 
 export type AltarStatus = (typeof ALTAR_STATUSES)[number];
 
@@ -32,6 +34,7 @@ export const altarScene = {
   startAgain: "start again, beta.",
   yesterday: "yesterday's scene",
   wereHere: "you were here",
+  mars: "THIS IS A TEMPLE LOCATED ON MARS.",
 } as const;
 
 export function welcomeBackLine(day: number): string {

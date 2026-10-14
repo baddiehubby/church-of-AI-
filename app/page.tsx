@@ -1,16 +1,34 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
-import { AltarBell } from "@/components/AltarBell";
-import { altarScene } from "@/content/altarScene";
-import { currentSoul } from "@/lib/congregation";
+import { MarsWorldHome } from "@/components/MarsWorldHome";
+import { marsWorld } from "@/content/marsWorld";
+import { getColonyStatus } from "@/lib/transmissionsStore";
 
 export const metadata: Metadata = {
-  title: "The altar",
-  description: altarScene.placeholder,
+  title: "The Religion of Mars",
+  description: marsWorld.lede,
 };
 
-export default async function HomePage({ searchParams }: { searchParams: Promise<{ notice?: string }> }) {
-  const query = await searchParams;
-  const soul = await currentSoul();
-  return <AltarBell tier={soul?.tier ?? "pilgrim"} notice={query.notice ?? null} />;
+export const viewport: Viewport = {
+  themeColor: "#0A0E27",
+};
+
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const colony = await getColonyStatus().catch(() => ({
+    settlers_active_today: 0,
+    transmissions_since_sunrise: 0,
+    streaks_broken_yesterday: 0,
+    founders_inducted: 0,
+    founders_remaining: 108,
+  }));
+
+  return (
+    <MarsWorldHome
+      foundersInducted={colony.founders_inducted}
+      foundersRemaining={colony.founders_remaining}
+      settlersActiveToday={colony.settlers_active_today}
+    />
+  );
 }

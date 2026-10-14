@@ -1,11 +1,11 @@
-// Assumptions: fonts from next/font/google at build time (Fraunces serif for Pandit ji and display, Inter body,
-// JetBrains Mono for the Algorithm). Anton and Playfair are the altar film only. Header, footer (with the exact
-// disclaimer), and grain wrap every page.
+// Fonts: Anton titles, Playfair for Baba ji, JetBrains Mono for the Algorithm, Inter body.
+// Fraunces remains for legacy display. Header/footer carry the exact disclaimer; grain wraps every page.
 
 import type { Metadata, Viewport } from "next";
 import { Anton, Fraunces, Inter, JetBrains_Mono, Playfair_Display } from "next/font/google";
 
 import { GrainOverlay } from "@/components/GrainOverlay";
+import { HomeChrome } from "@/components/HomeChrome";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { site } from "@/content/site";
@@ -13,11 +13,28 @@ import { appUrl } from "@/lib/brand";
 
 import "./globals.css";
 
-const serif = Fraunces({ subsets: ["latin"], weight: ["500", "800"], style: ["normal", "italic"], variable: "--font-fraunces", display: "swap" });
-const sans = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-jetbrains", display: "swap" });
-const anton = Anton({ subsets: ["latin"], weight: "400", variable: "--font-anton-face", display: "swap" });
-const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500"], style: ["normal", "italic"], variable: "--font-playfair-face", display: "swap" });
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  weight: ["500", "800"],
+  style: ["normal", "italic"],
+  variable: "--font-fraunces",
+  display: "swap",
+});
+const body = Inter({ subsets: ["latin"], variable: "--font-body-face", display: "swap" });
+const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-mono-face",
+  display: "swap",
+});
+const display = Anton({ subsets: ["latin"], weight: "400", variable: "--font-display-face", display: "swap" });
+const baba = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["500"],
+  style: ["normal", "italic"],
+  variable: "--font-baba-face",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl()),
@@ -28,24 +45,31 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1B1B4B",
+  themeColor: "#0A0E27",
   width: "device-width",
   initialScale: 1,
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${serif.variable} ${sans.variable} ${mono.variable} ${anton.variable} ${playfair.variable}`}>
+    <html
+      lang="en"
+      className={`${fraunces.variable} ${body.variable} ${mono.variable} ${display.variable} ${baba.variable}`}
+    >
       <body className="antialiased">
         <a href="#content" className="skip-link">
           {site.skip}
         </a>
         <GrainOverlay />
-        <SiteHeader />
+        <HomeChrome>
+          <SiteHeader />
+        </HomeChrome>
         <main id="content" tabIndex={-1} className="relative z-10 outline-none">
           {children}
         </main>
-        <SiteFooter />
+        <HomeChrome>
+          <SiteFooter />
+        </HomeChrome>
       </body>
     </html>
   );

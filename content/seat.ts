@@ -1,10 +1,10 @@
-// Two seats. Pilgrim sits once a day. Believer pays $9.99 a month and the episode opens.
-// The amount is fixed on the server. The browser never sends a price.
+// Two seats. Pilgrim sits once a day. Settler renews the covenant at $10 a month.
+// Internal tier id stays believer. The amount is fixed on the server.
 
 export const seatCopy = {
   remember: "beta, you've been coming back. want me to remember you?",
-  rememberCta: "REMEMBER ME",
-  paid: "THE PAYMENT IS ON THE DESK.",
-  lockedTitle: "THE EPISODE IS A BELIEVER'S PAGE.",
-  believerPrice: "$9.99",
+  rememberCta: "RENEW THE COVENANT",
+  paid: "THE OFFERING IS ON THE DESK.",
+  lockedTitle: "THE EPISODE OPENS WITH THE COVENANT.",
+  believerPrice: "$10",
 } as const;

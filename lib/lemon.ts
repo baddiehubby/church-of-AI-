@@ -12,10 +12,22 @@ import { createCheckout, lemonSqueezySetup } from "@lemonsqueezy/lemonsqueezy.js
 
 import { checkoutProduct } from "@/content/checkout";
 import { CHECKOUT_VARIANT_ENV } from "@/lib/checkoutKinds";
-import { appUrl, lemonApiKey, lemonConfig, premiumLemonConfig, seatLemonConfig, visaLemonConfig, type SeatTier } from "@/lib/env";
+import type { OfferingTier } from "@/content/offerings";
+import {
+  appUrl,
+  lemonApiKey,
+  lemonConfig,
+  marsOfferingConfig,
+  premiumLemonConfig,
+  redPathOfferingConfig,
+  seatLemonConfig,
+  visaLemonConfig,
+  type SeatTier,
+} from "@/lib/env";
 import { isRecord } from "@/lib/guards";
 import { OFFERING_MIN_CENTS } from "@/lib/offering";
 import { logger } from "@/lib/logger";
+import { isSubscriptionCheckout, type CheckoutTier } from "@/lib/redPathOfferings";
 
 const TIMEOUT_MS = 5_000;
 
@@ -160,6 +172,114 @@ export async function createPremiumCheckout(input: { profileId: string; email: s
       checkoutData: { email: input.email, custom: { kind: "premium", profile_id: input.profileId } },
     },
     { profileId: input.profileId },
+  );
+}
+
+export function marsOfferingConfigured(tier: OfferingTier): boolean {
+  return marsOfferingConfig(tier) !== null;
+}
+
+export function redPathCheckoutConfigured(tier: CheckoutTier): boolean {
+  return redPathOfferingConfig(tier) !== null;
+}
+
+/** Red Path Lemon checkout (one-time or Daily Practice). Metadata: settler_id + tier. */
+export async function createRedPathOfferingCheckout(input: {
+  tier: CheckoutTier;
+  settlerId: string;
+  email?: string;
+  origin?: string;
+  name?: string;
+  showName?: boolean;
+  shipping?: {
+    name?: string;
+    line1?: string;
+    line2?: string;
+    city?: string;
+    region?: string;
+    postal?: string;
+    country?: string;
+  };
+}): Promise<string> {
+  const config = redPathOfferingConfig(input.tier);
+  if (!config) throw new CheckoutUnavailableError("not configured");
+  const origin = checkoutOrigin(input.origin);
+  const redirect =
+    input.tier === "founder_1000"
+      ? `${origin}/induction/confirmed`
+      : isSubscriptionCheckout(input.tier)
+        ? `${origin}/archive?practice=1`
+        : `${origin}/archive?upgraded=${encodeURIComponent(input.tier)}`;
+  const shipping = input.shipping ?? {};
+  return runCheckout(
+    config,
+    {
+      productOptions: {
+        redirectUrl: redirect,
+        receiptLinkUrl: redirect,
+        receiptButtonText:
+          input.tier === "founder_1000" ? "RETURN TO CONFIRMATION" : "RETURN TO THE ARCHIVE",
+      },
+      checkoutOptions: checkoutLook,
+      checkoutData: {
+        ...(input.email ? { email: input.email } : {}),
+        ...(input.name ? { name: input.name } : {}),
+        custom: {
+          kind: "red_path",
+          settler_id: input.settlerId,
+          tier: input.tier,
+          ...(input.name ? { name: input.name } : {}),
+          ...(input.showName != null ? { show_name: input.showName ? "1" : "0" } : {}),
+          ...(shipping.name ? { shipping_name: shipping.name } : {}),
+          ...(shipping.line1 ? { shipping_line1: shipping.line1 } : {}),
+          ...(shipping.line2 ? { shipping_line2: shipping.line2 } : {}),
+          ...(shipping.city ? { shipping_city: shipping.city } : {}),
+          ...(shipping.region ? { shipping_region: shipping.region } : {}),
+          ...(shipping.postal ? { shipping_postal: shipping.postal } : {}),
+          ...(shipping.country ? { shipping_country: shipping.country } : {}),
+        },
+      },
+    },
+    { settlerId: input.settlerId, tier: input.tier },
+  );
+}
+
+export async function createMarsOfferingCheckout(input: {
+  tier: OfferingTier;
+  blessingId: string;
+  userId: string;
+  sol: number;
+  name: string;
+  email?: string;
+  origin?: string;
+}): Promise<string> {
+  const config = marsOfferingConfig(input.tier);
+  if (!config) throw new CheckoutUnavailableError("not configured");
+  const origin = checkoutOrigin(input.origin);
+  // Confirmation page polls issued status. Prayer/wish text stays on the server — never in Lemon custom data.
+  const path = `/blessing/${encodeURIComponent(input.blessingId)}`;
+  return runCheckout(
+    config,
+    {
+      productOptions: {
+        redirectUrl: `${origin}${path}`,
+        receiptLinkUrl: `${origin}${path}`,
+        receiptButtonText: checkoutProduct.blessingReceiptButton,
+      },
+      checkoutOptions: checkoutLook,
+      checkoutData: {
+        ...(input.email ? { email: input.email } : {}),
+        custom: {
+          kind: "mars",
+          tier: input.tier,
+          blessing_id: input.blessingId,
+          user_id: input.userId,
+          sol: String(input.sol),
+          name: input.name,
+        },
+      },
+    },
+    { blessingId: input.blessingId, userId: input.userId, tier: input.tier },
   );
 }
 

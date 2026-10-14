@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
@@ -13,9 +13,11 @@
   "dependencies": {
     "@lemonsqueezy/lemonsqueezy.js": "^4.0.0",
     "@sentry/nextjs": "^11.5.0",
+    "@stripe/stripe-js": "^10.0.0",
     "@supabase/supabase-js": "^2.117.3",
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.5",
+    "clsx": "^2.1.1",
     "framer-motion": "^14.1.0",
     "harfbuzzjs": "1.6.3",
     "next": "15.5.27",
@@ -23,6 +25,8 @@
     "react-dom": "19.1.0",
     "resend": "^6.32.1",
     "server-only": "^0.0.1",
+    "stripe": "^23.0.0",
+    "tailwind-merge": "^3.7.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {

@@ -12,21 +12,30 @@
 
 import { NextResponse } from "next/server";
 
-import { sendCertificateEmail } from "@/lib/email";
-import { webhookSecret } from "@/lib/env";
+import { offeringTiers, type OfferingTier } from "@/content/offerings";
+import {
+  addPatron,
+  getBlessing,
+  issueBlessing,
+  publishMonumentName,
+  publishWallName,
+  upsertMarsSubscription,
+} from "@/lib/blessingsStore";
+import { applyLemonSeat } from "@/lib/congregation";
+import { sendBlessingEmail, sendCertificateEmail } from "@/lib/email";
+import { tierForMarsVariant, tierForSeatVariant, webhookSecret } from "@/lib/env";
 import { isRecord } from "@/lib/guards";
+import { lemonSeatEffect } from "@/lib/lemonSeat";
 import { readLocalCertificate, saveLocalCertificate } from "@/lib/local-petitions";
 import { logger } from "@/lib/logger";
+import { isOfferingTier } from "@/lib/marsOfferings";
 import { captureError } from "@/lib/monitor";
 import { getPetition } from "@/lib/petitions";
+import { applySubscriptionEvent } from "@/lib/premium";
 import { sanitizeName } from "@/lib/sanitizeName";
 import { sanitizeWish } from "@/lib/sanitizeWish";
 import { isPetitionId } from "@/lib/soul-id";
 import { getServiceClient, isSupabaseConfigured } from "@/lib/supabase";
-import { applyLemonSeat } from "@/lib/congregation";
-import { tierForSeatVariant } from "@/lib/env";
-import { lemonSeatEffect } from "@/lib/lemonSeat";
-import { applySubscriptionEvent } from "@/lib/premium";
 import { isTier } from "@/lib/tiers";
 import { applyPaidOrder, applyRefund, isVisaReference, VisaStoreUnavailable } from "@/lib/visaWishes";
 import { recordWebhookEvent, type WebhookAuditRow, type WebhookKind } from "@/lib/webhookAudit";
@@ -165,7 +174,15 @@ export async function POST(request: Request): Promise<Response> {
   const eventName = str(meta.event_name) || null;
   const custom = obj(meta.custom_data);
   const kind: WebhookKind =
-    custom.kind === "visa" ? "visa" : custom.kind === "premium" ? "premium" : custom.kind === "seat" ? "seat" : "certificate";
+    custom.kind === "visa"
+      ? "visa"
+      : custom.kind === "premium"
+        ? "premium"
+        : custom.kind === "seat"
+          ? "seat"
+          : custom.kind === "mars"
+            ? "mars"
+            : "certificate";
   const data = obj(payload.data);
   const attributes = obj(data.attributes);
   const orderId = str(data.id).slice(0, 64) || null;
@@ -189,6 +206,9 @@ export async function POST(request: Request): Promise<Response> {
   if (kind === "seat" && eventName && subscriptionEvents.has(eventName)) {
     return seatSubscription(base, eventName, custom, orderId, attributes);
   }
+  if (kind === "mars" && eventName && subscriptionEvents.has(eventName)) {
+    return marsSubscription(base, eventName, custom, orderId, attributes);
+  }
 
   if (eventName !== "order_created" && eventName !== "order_refunded") {
     return respond({ ...base, signature_valid: true, outcome: "ignored_event", detail: null }, { received: true, ignored: true }, 200);
@@ -197,10 +217,110 @@ export async function POST(request: Request): Promise<Response> {
 
   const status = str(attributes.status);
   if (kind === "visa") return visaOrder(base, eventName, status, str(custom.reference_id), orderId);
+  if (kind === "mars") return marsOrder(base, eventName, status, custom, attributes, orderId);
   if (kind === "premium" || kind === "seat") {
     return respond({ ...base, signature_valid: true, outcome: "ignored_event", detail: `${kind}_order_event` }, { received: true }, 200);
   }
   return certificateOrder(base, eventName, status, custom, attributes, orderId);
+}
+
+async function marsOrder(base: Base, eventName: string, status: string, custom: Json, attributes: Json, orderId: string): Promise<Response> {
+  const ok = { ...base, signature_valid: true } as const;
+  if (eventName === "order_refunded") {
+    return respond({ ...ok, outcome: "ignored_event", detail: "refund_noted_mars" }, { received: true }, 200);
+  }
+  if (status !== "paid") {
+    return respond({ ...ok, outcome: "not_paid", detail: `status_${status.replace(/[^a-z_]/gi, "").slice(0, 24) || "missing"}` }, { received: true }, 200);
+  }
+  const blessingId = str(custom.blessing_id).trim();
+  const userId = str(custom.user_id).trim().toUpperCase();
+  const tierRaw = str(custom.tier).trim();
+  const tier: OfferingTier | null = isOfferingTier(tierRaw) ? tierRaw : tierForMarsVariant(str(attributes.variant_id));
+  if (!blessingId || !isPetitionId(userId) || !tier) {
+    return respond({ ...ok, outcome: "invalid_payload", detail: "bad_mars_meta" }, { received: true }, 200);
+  }
+  try {
+    const result = await issueBlessing({ blessingId, lemonOrderId: orderId });
+    if (result === "missing") return respond({ ...ok, outcome: "invalid_payload", detail: "unknown_blessing" }, { received: true }, 200);
+    if (result === "duplicate") return respond({ ...ok, reference: blessingId.slice(0, 24), outcome: "duplicate", detail: "order_seen" }, { received: true, duplicate: true }, 200);
+
+    const blessing = await getBlessing(blessingId);
+    const named = sanitizeName(custom.name);
+    const displayName = named.ok ? named.value : blessing?.name || "settler";
+    const sol = Number(str(custom.sol)) || blessing?.sol || 1;
+
+    // Benefits only after paid + issue. Wall / monument require moderation before public list.
+    if (tier === "wall") {
+      await publishWallName({
+        blessingId,
+        lemonOrderId: orderId,
+        displayName,
+        sol,
+      });
+    }
+    if (tier === "patron") {
+      await addPatron({
+        userId,
+        name: displayName,
+        lemonOrderId: orderId,
+        sol,
+        year: new Date().getFullYear(),
+      });
+    }
+    if (tier === "founder_engraving") {
+      await publishMonumentName({
+        blessingId,
+        lemonOrderId: orderId,
+        displayName,
+        sol,
+      });
+    }
+
+    const email = str(attributes.user_email).trim();
+    if (blessing && email && offeringTiers[blessing.tier]) {
+      await sendBlessingEmail({
+        to: email,
+        blessingId: blessing.id,
+        name: blessing.name,
+        habitatId: blessing.habitatId,
+        sol: blessing.sol,
+        blessingText: blessing.blessingText,
+        tierLabel: offeringTiers[blessing.tier].label,
+      });
+    }
+    logger.info("mars offering issued", { orderId, detail: tier });
+    return respond({ ...ok, reference: blessingId.slice(0, 24), outcome: "issued", detail: tier }, { received: true }, 200);
+  } catch (error) {
+    captureError(error, { order_id: orderId, event_name: eventName });
+    return respond({ ...ok, outcome: "db_error", detail: "store_error" }, { error: "storage unavailable" }, 500);
+  }
+}
+
+async function marsSubscription(base: Base, eventName: string, custom: Json, subscriptionId: string | null, attributes: Json): Promise<Response> {
+  const ok = { ...base, signature_valid: true } as const;
+  if (!subscriptionId) return respond({ ...ok, outcome: "invalid_payload", detail: "missing_subscription_id" }, { error: "missing subscription id" }, 400);
+  const userId = str(custom.user_id).trim().toUpperCase();
+  if (!isPetitionId(userId)) return respond({ ...ok, outcome: "invalid_payload", detail: "bad_mars_user" }, { received: true }, 200);
+  let status = str(attributes.status) || "active";
+  if (eventName === "subscription_expired") status = "expired";
+  if (eventName === "subscription_payment_failed") status = "past_due";
+  if (eventName === "subscription_cancelled") status = "cancelled";
+  const cancelledAt = status === "cancelled" || status === "expired" ? new Date().toISOString() : null;
+  try {
+    await upsertMarsSubscription({ userId, lemonSubscriptionId: subscriptionId, status, cancelledAt });
+    await applyLemonSeat({
+      userId,
+      subscriptionId,
+      tier: "believer",
+      status: status === "cancelled" ? "cancelled" : status === "expired" ? "expired" : status === "past_due" ? "past_due" : "active",
+      endsAt: str(attributes.ends_at) || str(attributes.renews_at) || null,
+    });
+    logger.info("mars covenant", { orderId: subscriptionId, detail: status });
+    return respond({ ...ok, reference: userId, outcome: status === "expired" ? "revoked" : "granted", detail: status }, { received: true }, 200);
+  } catch (error) {
+    captureError(error, { order_id: subscriptionId, event_name: eventName });
+    return respond({ ...ok, outcome: "db_error", detail: "store_error" }, { error: "storage unavailable" }, 500);
+  }
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

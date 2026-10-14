@@ -1,7 +1,6 @@
-// Assumptions: Upstash sliding window when UPSTASH_REDIS_REST_URL and _TOKEN are both set; otherwise an
-// in-memory per-instance window (resets on cold start, not shared across regions) with one warning, so local dev
-// works. The key and every log line use a truncated sha256 of the first x-forwarded-for IP, never the raw IP.
-// Used by /api/checkout and /api/wish. Never call it from /api/webhook or /api/health.
+// Upstash sliding window when configured; otherwise in-memory for local development only.
+// Prefer an authenticated subject key. IP is taken only from platform-set headers when available —
+// never trust a raw client-supplied X-Forwarded-For alone in production.
 
 import "server-only";
 
@@ -23,10 +22,30 @@ const buckets = new Map<string, Bucket>();
 const limiters = new Map<string, Ratelimit>();
 let warnedFallback = false;
 
+function hashSubject(value: string): string {
+  return createHash("sha256").update(value).digest("hex").slice(0, 16);
+}
+
+/**
+ * Platform-trusted client address when present.
+ * Falls back to "unknown" rather than trusting spoofable X-Forwarded-For in production.
+ */
+export function trustedClientAddress(request: Request): string {
+  const cf = request.headers.get("cf-connecting-ip")?.trim();
+  if (cf) return cf;
+  const vercel = request.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim();
+  if (vercel) return vercel;
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
+  if (process.env.NODE_ENV !== "production") {
+    const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+    if (forwarded) return forwarded;
+  }
+  return "unknown";
+}
+
 export function clientIpHash(request: Request): string {
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip")?.trim() || "unknown";
-  return createHash("sha256").update(ip).digest("hex").slice(0, 16);
+  return hashSubject(trustedClientAddress(request));
 }
 
 function memoryLimit(key: string, limit: number, windowMs: number): LimitResult {
@@ -44,10 +63,14 @@ function memoryLimit(key: string, limit: number, windowMs: number): LimitResult 
   return { ok: true };
 }
 
+function upstashConfigured(): boolean {
+  return Boolean(process.env.UPSTASH_REDIS_REST_URL?.trim() && process.env.UPSTASH_REDIS_REST_TOKEN?.trim());
+}
+
 function upstash(prefix: string, limit: number, windowMs: number): Ratelimit | null {
-  const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
-  if (!url || !token) return null;
+  if (!upstashConfigured()) return null;
+  const url = process.env.UPSTASH_REDIS_REST_URL!.trim();
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN!.trim();
   const cacheKey = `${prefix}:${limit}:${windowMs}`;
   const existing = limiters.get(cacheKey);
   if (existing) return existing;
@@ -60,25 +83,48 @@ function upstash(prefix: string, limit: number, windowMs: number): Ratelimit | n
   return limiter;
 }
 
-export async function rateLimit(request: Request, prefix: string, limit: number, windowMs: number): Promise<LimitResult> {
-  const ipHash = clientIpHash(request);
+export async function rateLimitByKey(
+  subjectKey: string,
+  prefix: string,
+  limit: number,
+  windowMs: number,
+): Promise<LimitResult> {
+  const subject = hashSubject(subjectKey);
   const limiter = upstash(prefix, limit, windowMs);
   let result: LimitResult;
   if (!limiter) {
-    if (!warnedFallback) {
+    if (process.env.NODE_ENV === "production" && !warnedFallback) {
       warnedFallback = true;
-      logger.warn("upstash not configured; using in-memory rate limit");
+      logger.warn("upstash not configured in production; transmit rate limits are per-instance only");
+    } else if (!warnedFallback) {
+      warnedFallback = true;
+      logger.warn("upstash not configured; using in-memory rate limit (local/dev)");
     }
-    result = memoryLimit(`${prefix}:${ipHash}`, limit, windowMs);
+    result = memoryLimit(`${prefix}:${subject}`, limit, windowMs);
   } else {
     try {
-      const outcome = await limiter.limit(ipHash);
-      result = outcome.success ? { ok: true } : { ok: false, retryAfter: Math.max(1, Math.ceil((outcome.reset - Date.now()) / 1000)) };
+      const outcome = await limiter.limit(subject);
+      result = outcome.success
+        ? { ok: true }
+        : { ok: false, retryAfter: Math.max(1, Math.ceil((outcome.reset - Date.now()) / 1000)) };
     } catch {
-      logger.warn("upstash limit failed; using in-memory for this request", { ipHash });
-      result = memoryLimit(`${prefix}:${ipHash}`, limit, windowMs);
+      logger.warn("upstash limit failed; using in-memory for this request", { subject });
+      result = memoryLimit(`${prefix}:${subject}`, limit, windowMs);
     }
   }
-  if (!result.ok) logger.info("rate limited", { prefix, ipHash });
+  if (!result.ok) logger.info("rate limited", { prefix, subject });
   return result;
+}
+
+export async function rateLimit(
+  request: Request,
+  prefix: string,
+  limit: number,
+  windowMs: number,
+): Promise<LimitResult> {
+  return rateLimitByKey(`ip:${clientIpHash(request)}`, prefix, limit, windowMs);
+}
+
+export function resetRateLimitMemory(): void {
+  buckets.clear();
 }

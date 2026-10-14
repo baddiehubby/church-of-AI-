@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 
 import { logger } from "@/lib/logger";
+import { reportMarsEnv } from "@/lib/marsEnv";
 import { getServiceClient, isSupabaseConfigured } from "@/lib/supabase";
 
 export const runtime = "nodejs";
@@ -42,7 +43,21 @@ async function checkLemon(): Promise<Check> {
 
 export async function GET(): Promise<Response> {
   const [supabase, lemon] = await Promise.all([checkSupabase(), checkLemon()]);
-  const ok = supabase === "ok" && lemon === "ok";
-  if (!ok) logger.warn("health degraded", { supabase, lemon });
-  return NextResponse.json({ ok, supabase, lemon }, { status: ok ? 200 : 503, headers: { "Cache-Control": "no-store" } });
+  const mars = reportMarsEnv();
+  const ok = supabase !== "down" && lemon !== "down" && mars.ok;
+  if (!ok) logger.warn("health degraded", { supabase, lemon, marsOk: mars.ok, marsWarnings: mars.warnings.join("; ") });
+  return NextResponse.json(
+    {
+      ok,
+      supabase,
+      lemon,
+      mars: {
+        sessionSecret: mars.sessionSecret,
+        supabase: mars.supabase,
+        upstash: mars.upstash,
+        warnings: mars.warnings,
+      },
+    },
+    { status: ok ? 200 : 503, headers: { "Cache-Control": "no-store" } },
+  );
 }

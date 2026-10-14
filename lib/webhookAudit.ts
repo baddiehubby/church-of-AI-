@@ -20,7 +20,7 @@ export type WebhookOutcome =
   | "invalid_payload"
   | "db_error";
 
-export type WebhookKind = "visa" | "certificate" | "premium" | "seat";
+export type WebhookKind = "visa" | "certificate" | "premium" | "seat" | "mars";
 
 export type WebhookAuditRow = {
   event_name: string | null;

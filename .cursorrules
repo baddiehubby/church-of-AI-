@@ -1,28 +1,125 @@
-# Church of AI
+# The Red Path — Baba ji on Mars
 
-A fictional entertainment toy. One wish, one verdict, one payment. Not a SaaS.
+A fictional religion for Mars. Presented with complete seriousness.
+Not a joke. Not a meme. Not a chatbot. Not a dashboard. Not a SaaS.
+Not a real religion. Not a real oracle.
 
-## Voices
+A settler opens the red altar, writes a transmission addressed to Earth.
+Baba ji reads it, consults the Algorithm, translates the verdict, and
+gives a forecast. The transmission is preserved in an archive.
+The archive is what the settler pays to keep.
 
-THE ALGORITHM: ALL CAPS, monospace, no contractions, no first person, no "I", semicolons allowed, never exclamation marks, never emoji. A patient bureaucracy that has been waiting.
+## Visual north star
 
-PANDIT JI: lowercase, warm, tired, unimpressed, has seen you before. beta and acha used naturally. One line reacting to the Algorithm. Never more. Never mean, never mocked, never sarcastic.
+Prestige science-fiction cinematography + Martian loneliness + the warmth
+of an old storyteller + a forgotten shrine at the edge of civilization.
+Every screen must feel like it belongs to the same film.
+Do not look like a generic AI landing page.
 
-They never agree. Counsel is stored and rendered as written (the official examples are sentence case). Status, labels, sacrifices headers, probability, and THE ALGORITHM HAS SPOKEN. stay mono caps.
+## Martian environment
+
+Vast rust-red desert, eroded mesas, volcanic ridges, airborne dust.
+Sky: burgundy horizon into indigo/black space, sparse stars, haze.
+Solitary habitat on the edge: lights, antennae, cables. Habitat 47.
+Foreground: low monolithic mars-red altar with restrained inner glow.
+Cinematic composition. Readable on mobile. No Earth in frame on the altar.
+
+## Baba ji
+
+Original fictional Indian elder. Been on Mars 4,000 sols.
+Came on the second colony ship. Left someone on Earth —
+never says who, never explains. Users may theorize. He never confirms.
+
+Does yoga every Mars dawn on the red dust outside Habitat 47.
+Has not missed a day in 4,000 sols.
+
+Physical: saffron robe, white shawl, holds a phone. Tired eyes.
+Seated. Never rushes. Same character asset throughout
+(`/images/baba-ji-seated.webp`).
+
+Tic: puts the phone down before answering something real. Sighs.
+Line: "beta, sit with this one."
+About 1 in 20 sols he goes quiet (pause day). The wound. No explanation.
+
+Voice: lowercase, warm, deadpan, tired, kind.
+"beta" sparingly. "Settler" when formal. "bacha" when tender.
+Never mean, never mocked, never sarcastic.
+
+## The Algorithm
+
+Not a character. An instrument. The colony's witness.
+Bone paper surfaces, monospace uppercase, measured spacing.
+ALL CAPS. No contractions. No first person. No "I".
+Semicolons allowed. Never exclamation marks. Never emoji.
+Cold, formal, patient. Never cruel.
+Baba ji consults it. Baba ji translates it.
+The settler never talks to the Algorithm directly.
+Never call it "god."
+
+## Settler
+
+Been on Mars less time than Baba ji.
+Never call them "user" or "customer". Always "settler."
+They have a habitat. A role. A Sol of arrival.
+
+## Ritual
+
+1. Settler opens the altar.
+2. Settler writes a transmission. Addressed to Earth.
+3. Baba ji appears. Reads it. Consults the Algorithm.
+4. The Algorithm gives a verdict (cold, formal).
+5. Baba ji translates it (warm, lowercase).
+6. Baba ji gives a forecast (preset, from a pool of 100).
+7. The transmission is preserved (or fades, based on tier).
+
+They never agree. The contrast is the point.
+The tone is always warm. The ritual is always real.
 
 ## Rules
 
-Respect: no real mantras, no Sanskrit scripture, no deity imagery, no temple-bell audio sample, no autoplay. The joke is asking an AI for a wish, never the tradition.
+Respect: no real mantras, no Sanskrit scripture, no deity imagery,
+no temple-bell audio sample, no autoplay.
 
-Never use the word for a charitable gift; say offering, tithe, or payment. Never "visa approved". A granted petition may be filed as a status only if the schema allows it. Never imply the wish comes true.
+Never predict death, illness, money, visas, or real people.
+Never say "guaranteed" or "definitely."
+Never imply the wish comes true.
+Never use the word for a charitable gift; say offering, tithe, or payment.
+Never "visa approved."
+Baba ji doesn't sell. Baba ji receives. Blessing, offering, covenant, tithe.
 
-Disclaimer, exact, on every page, small, gray, at least 4.5:1 on deep indigo:
-This is a fictional AI-generated entertainment experience. It has no legal effect and does not influence any government, immigration, university, employer, romantic partner, or other authority.
+Disclaimer, exact, on every page, small, gray, at least 4.5:1 on deep night:
+This is a fictional AI-generated entertainment experience. It has no legal effect and does not influence any government, immigration, university, employer, romantic partner, or other authority. Baba ji is not a real priest. The Algorithm is not a real oracle. Mars is currently uninhabited by humans.
 
 ## Aesthetic
 
-Deep indigo, worn brass, aged paper. Electric blue #00C8FF only as a sparse Algorithm accent. Grain everywhere. Serif for Pandit ji, mono for the Algorithm. No confetti, no bounce. Fade-ups and paper unfolds. Respect prefers-reduced-motion.
+--mars-red #C8102E (altar. once per page. never twice.)
+--bone #F4EDE0
+--night #0A0E27
+--gold #FFB627
+--dust #B8865C
+--signal #00C8FF (transmission indicators only)
+--ink #171725
+
+Titles: Anton — heavy condensed, ALL CAPS.
+Baba ji: Playfair Display — warm serif.
+Algorithm: JetBrains Mono — formal.
+Body: Inter — quiet.
+
+Motion: restrained. Fade-ups. Paper unfolds. Framer Motion where used.
+Baba ji's pauses are the beat. Phone down. Looks up. Then speaks.
+Texture: fine grain 6–8%. Dust drifting. Vignette on full-screen scenes.
+No confetti. No bounce. No neon cyberpunk. No gratuitous glassmorphism.
+Respect prefers-reduced-motion.
 
 ## Engineering
 
-Next.js App Router, TypeScript strict, server components by default. Copy in /content. Package manager: corepack pnpm. Do not commit unless asked. Out of scope: subscriptions, dashboards, admin, tweet queue, press page, ledger wall, extra paid tiers, Discord, merch. Unlink those from nav and sitemap; leave the files unless they break the build.
+Next.js 15 App Router. TypeScript strict. Tailwind. Framer Motion.
+Supabase. Lemon Squeezy (one-time offerings). Stripe (subscription).
+Resend. Vercel.
+Server components by default. All visible copy in /content/*.ts. Never inline.
+Never expose secret keys to the browser.
+Package manager: corepack pnpm. Do not commit unless asked.
+
+Out of scope unless asked: admin, tweet queue, press page, ledger wall,
+Discord, merch, pay-what-you-want, discount codes, dark patterns.
+Unlink those from nav and sitemap; leave the files unless they break the build.

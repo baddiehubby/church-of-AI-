@@ -17,8 +17,14 @@ export function stripeWebhookSecret(): string | null {
   return process.env.STRIPE_WEBHOOK_SECRET?.trim() || null;
 }
 
+/** Settler's Covenant recurring price. Prefers STRIPE_PRICE_ID, then legacy believer price. */
+export function settlerPriceId(): string | null {
+  return process.env.STRIPE_PRICE_ID?.trim() || process.env.STRIPE_PRICE_BELIEVER?.trim() || null;
+}
+
 export function priceIdFor(tier: PaidTier): string | null {
-  const key = tier === "believer" ? "STRIPE_PRICE_BELIEVER" : tier === "devotee" ? "STRIPE_PRICE_DEVOTEE" : "STRIPE_PRICE_DARSHAN";
+  if (tier === "believer") return settlerPriceId();
+  const key = tier === "devotee" ? "STRIPE_PRICE_DEVOTEE" : "STRIPE_PRICE_DARSHAN";
   return process.env[key]?.trim() || null;
 }
 
@@ -34,7 +40,8 @@ export function darshanCheckoutOpen(): boolean {
   return process.env.STRIPE_DARSHAN_OPEN?.trim() === "true" && Boolean(priceIdFor("darshan"));
 }
 
-export const BELIEVER_MONTHLY_CENTS = 999;
+/** Settler seat. Internal tier id stays believer for the schema. */
+export const BELIEVER_MONTHLY_CENTS = 1000;
 
 export function believerLineItems(priceId: string | null): URLSearchParams {
   const params = new URLSearchParams();
@@ -46,7 +53,7 @@ export function believerLineItems(priceId: string | null): URLSearchParams {
   params.set("line_items[0][price_data][currency]", "usd");
   params.set("line_items[0][price_data][unit_amount]", String(BELIEVER_MONTHLY_CENTS));
   params.set("line_items[0][price_data][recurring][interval]", "month");
-  params.set("line_items[0][price_data][product_data][name]", "BELIEVER");
+  params.set("line_items[0][price_data][product_data][name]", "Settler's Covenant");
   return params;
 }
 
@@ -105,7 +112,7 @@ export async function createSubscriptionCheckout(input: {
   const params = new URLSearchParams();
   params.set("mode", "subscription");
   params.set("success_url", `${input.origin}/?notice=remembered`);
-  params.set("cancel_url", `${input.origin}/pricing?notice=cancelled`);
+  params.set("cancel_url", `${input.origin}/archive?notice=cancelled`);
   const price = priceIdFor(input.tier);
   if (input.tier === "believer") {
     for (const [key, value] of believerLineItems(price).entries()) params.set(key, value);
@@ -123,6 +130,31 @@ export async function createSubscriptionCheckout(input: {
   if (input.customerId) params.set("customer", input.customerId);
   else if (input.email) params.set("customer_email", input.email);
   if (input.trial) params.set("subscription_data[trial_period_days]", "7");
+  const json = await stripe("checkout/sessions", "POST", params);
+  if (typeof json.url !== "string") throw new Error("stripe");
+  return json.url;
+}
+
+/** Mars Settler's Covenant. Returns Checkout URL. Client never sees secret keys. */
+export async function createSettlerCovenantCheckout(input: {
+  settlerId: string;
+  origin: string;
+}): Promise<string> {
+  if (!stripeSecret()) throw new Error("unconfigured");
+  const price = settlerPriceId();
+  const params = new URLSearchParams();
+  params.set("mode", "subscription");
+  params.set("success_url", `${input.origin}/archive?upgraded=1`);
+  params.set("cancel_url", `${input.origin}/archive`);
+  params.set("client_reference_id", input.settlerId);
+  params.set("metadata[settler_id]", input.settlerId);
+  params.set("metadata[kind]", "mars_covenant");
+  params.set("subscription_data[metadata][settler_id]", input.settlerId);
+  params.set("subscription_data[metadata][kind]", "mars_covenant");
+  for (const [key, value] of believerLineItems(price).entries()) params.set(key, value);
+  if (!price) {
+    params.set("line_items[0][price_data][product_data][name]", "Settler's Covenant");
+  }
   const json = await stripe("checkout/sessions", "POST", params);
   if (typeof json.url !== "string") throw new Error("stripe");
   return json.url;

@@ -19,9 +19,10 @@ describe("seats", () => {
     expect(episodeAllowed("believer")).toBe(true);
   });
 
-  it("prices believer at 9.99 when no dashboard price is set", () => {
+  it("prices settler at 10 when no dashboard price is set", () => {
     const open = believerLineItems(null);
-    expect(open.get("line_items[0][price_data][unit_amount]")).toBe("999");
+    expect(open.get("line_items[0][price_data][unit_amount]")).toBe("1000");
+    expect(open.get("line_items[0][price_data][product_data][name]")).toBe("SETTLER");
     expect(open.get("line_items[0][price_data][currency]")).toBe("usd");
     expect(open.get("line_items[0][price_data][recurring][interval]")).toBe("month");
     expect(open.get("line_items[0][price]")).toBeNull();

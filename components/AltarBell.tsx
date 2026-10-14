@@ -179,7 +179,8 @@ export function AltarBell({ tier = "pilgrim", notice = null }: { tier?: Tier; no
   const episodeLabel = episodeLink?.kind === "last" ? episodeCopy.lastLink : episodeCopy.link;
 
   return (
-    <section className="altar-night" aria-labelledby="altar-bell-title">
+    <section className="altar-night altar-mars" aria-labelledby="altar-bell-title">
+      <div className="altar-dust" aria-hidden="true" />
       <div className="altar-grain" aria-hidden="true" />
       <div className={phase === "idle" ? "altar-veil" : "altar-veil altar-veil-dim"} aria-hidden="true" />
       {view && phase !== "spoken" ? (
@@ -190,11 +191,11 @@ export function AltarBell({ tier = "pilgrim", notice = null }: { tier?: Tier; no
       <div className="altar-stage">
         <div className={phase === "idle" ? "altar-mark" : "altar-mark altar-mark-dim"} aria-hidden="true">
           <svg viewBox="0 0 280 220" className="altar-svg">
-            <path d="M40 200 H240" fill="none" stroke="#E2C48A" strokeWidth="1.2" />
-            <path d="M70 200 V150 H210 V200" fill="none" stroke="#B8894A" strokeWidth="1.4" />
-            <path d="M90 150 V118 H190 V150" fill="none" stroke="#E2C48A" strokeWidth="1" />
-            <path d="M118 200 V168 H162 V200" fill="none" stroke="#8A6230" strokeWidth="1" />
-            <path d="M40 200 Q140 36 240 200" fill="none" stroke="#E2C48A" strokeWidth="1.2" />
+            <path d="M40 200 H240" fill="none" stroke="#FF3B3B" strokeWidth="1.4" />
+            <path d="M70 200 V150 H210 V200" fill="none" stroke="#C8102E" strokeWidth="1.6" />
+            <path d="M90 150 V118 H190 V150" fill="none" stroke="#FF3B3B" strokeWidth="1.2" />
+            <path d="M118 200 V168 H162 V200" fill="none" stroke="#8E1020" strokeWidth="1.2" />
+            <path d="M40 200 Q140 36 240 200" fill="none" stroke="#FF3B3B" strokeWidth="1.4" />
           </svg>
           <span className={bright ? "altar-flame altar-flame-bright" : "altar-flame"} />
         </div>
@@ -215,8 +216,8 @@ export function AltarBell({ tier = "pilgrim", notice = null }: { tier?: Tier; no
               void ring();
             }}
           >
-            <h1 id="altar-bell-title" className="sr-only">
-              The altar
+            <h1 id="altar-bell-title" className="altar-mars-title">
+              {altarScene.mars}
             </h1>
             <label className="sr-only" htmlFor="altar-line">
               {altarScene.placeholder}
