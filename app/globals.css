@@ -823,7 +823,7 @@ body {
   pointer-events: none;
   position: absolute;
   inset: 0;
-  /* Bible: fine grain at 6â8%. */
+  /* Bible: fine grain at 6Ã¢ÂÂ8%. */
   opacity: 0.07;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
@@ -945,7 +945,7 @@ body {
   object-fit: cover;
   object-position: 50% 12%;
   aspect-ratio: 3 / 3.55;
-  /* Reserve space before decode â avoid altar CLS. */
+  /* Reserve space before decode Ã¢ÂÂ avoid altar CLS. */
   background: color-mix(in srgb, var(--night) 85%, #3a1820);
   transition:
     transform 880ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -964,7 +964,7 @@ body {
   position: absolute;
   inset: auto 8% -6% 8%;
   height: 42%;
-  /* Warm lift from the altar light â not a second mars-red mark. */
+  /* Warm lift from the altar light Ã¢ÂÂ not a second mars-red mark. */
   background: radial-gradient(ellipse at 50% 100%, rgba(255, 182, 39, 0.22), transparent 70%);
   mix-blend-mode: screen;
   opacity: 0.75;
@@ -996,6 +996,31 @@ body {
 
 .baba-portrait[data-pose="up"] .baba-portrait-glow {
   opacity: 1;
+}
+
+/* Altar uses the cinematic home portrait — crop toward the face above the slab. */
+.temple-baba .baba-portrait[data-portrait="home"] .baba-portrait-photo {
+  object-position: 50% 16%;
+  filter: saturate(1.02) contrast(1.04) brightness(0.98);
+}
+
+.temple-offerings-link {
+  display: inline-block;
+  margin-top: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--bone) 70%, transparent);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--dust) 40%, transparent);
+}
+
+.temple-offerings-link:hover,
+.temple-offerings-link:focus-visible {
+  color: var(--bone);
+  border-bottom-color: var(--gold);
+  outline: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

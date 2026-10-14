@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { AltarDust } from "@/components/AltarDust";
@@ -192,7 +193,7 @@ export function TempleLanding() {
         ) : (
           <div className="temple-cluster">
             <div className="temple-baba" id="baba-ji">
-              <BabaJi pose="inbox" priority />
+              <BabaJi pose="inbox" portrait="home" priority />
             </div>
             <form
               className="temple-form"
@@ -250,6 +251,9 @@ export function TempleLanding() {
         <div className="temple-ground">
           <p>{distance}</p>
           <p className="temple-silent">{temple.noReply}</p>
+          <Link href={temple.offeringsHref} className="temple-offerings-link">
+            {temple.offeringsLink}
+          </Link>
           <Disclaimer surface="void" className="temple-disclaimer" />
         </div>
       )}

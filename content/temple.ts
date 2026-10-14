@@ -9,4 +9,6 @@ export const temple = {
   distance: "EARTH IS 225,000,000 KM AWAY.",
   noReply: "NO REPLY EXPECTED.",
   empty: "write something first, settler.",
+  offeringsLink: "[ OPEN THE OFFERING DESK ]",
+  offeringsHref: "/offerings",
 } as const;
