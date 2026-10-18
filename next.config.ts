@@ -15,9 +15,10 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_SENTRY_DSN: process.env.SENTRY_DSN ?? "",
   },
+  // Fonts only — do not force-trace harfbuzzjs wasm through pnpm symlinks (breaks Vercel packaging).
   outputFileTracingIncludes: {
-    "/api/og/[id]": ["./assets/fonts/**/*", "./node_modules/harfbuzzjs/dist/*.wasm"],
-    "/api/og/certificate/[id]": ["./assets/fonts/**/*", "./node_modules/harfbuzzjs/dist/*.wasm"],
+    "/api/og/[id]": ["./assets/fonts/**/*"],
+    "/api/og/certificate/[id]": ["./assets/fonts/**/*"],
     "/api/og/sermon/[userId]/[week]": ["./assets/fonts/**/*"],
     "/api/og/darshan/[id]": ["./assets/fonts/**/*"],
   },
